@@ -7,7 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a1a2e">
 <title>Anakel — Ruta</title>
-<link rel="manifest" href="data:application/json,{}">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon_180.png">
 <style>
   :root {
     --bg: #f5f4f0;
@@ -1322,6 +1323,10 @@ function closeOverlay(e){ if(e.target===document.getElementById('overlay')) clos
 updateSyncBadge();
 document.getElementById('login-pass')?.addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
 initFirebase().catch(e=>console.warn('Firebase init error:',e));
+// Register service worker for PWA/offline support
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered')).catch(e=>console.warn('SW error:',e));
+}
 </script>
 </body>
 </html>
