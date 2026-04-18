@@ -55,6 +55,11 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
   }
   .dark #topbar { background: #16161c; border-bottom-color: var(--border); }
+  .dark #topbar button svg { stroke: #c0c0cc; }
+  .dark #topbar button { color: #c0c0cc; }
+  .dark .sync-dot { background: #2fb573; }
+  .dark .sync-dot.offline { background: #d4a035; }
+  .dark .sync-dot.syncing { background: #4a7ab5; }
   .dark #bottomnav { background: #16161c; border-top-color: var(--border); }
   .dark #login-screen { background: #0d0d12; }
   .dark .login-field { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
@@ -372,9 +377,11 @@
 
     <!-- CLIENTES PAGE -->
     <div id="page-clientes" class="page">
-      <div class="search-wrap">
-        <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()">
+      <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
+        <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()" style="flex:1">
+        <button onclick="abrirFiltroRutas()" id="btn-filtro-rutas" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Ruta ▾</button>
       </div>
+      <div id="cli-filtro-activo" style="display:none;padding:6px 16px;background:var(--amber-bg);font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)"></div>
       <div id="clientes-list" style="background:var(--surface)"></div>
     </div>
 
@@ -405,11 +412,22 @@
 
     <!-- PRODUCTOS PAGE -->
     <div id="page-productos" class="page">
-      <div class="page-header">
-        <div class="page-title">Mi inventario</div>
-        <div class="page-sub">Productos en el carro hoy</div>
+      <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
+        <input class="search-input" id="prod-inv-search" placeholder="Buscar producto..." oninput="renderProductos()" style="flex:1">
+        <button onclick="abrirFiltroCategorias()" id="btn-filtro-cats" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Cat. ▾</button>
       </div>
+      <div id="prod-filtro-activo" style="display:none;padding:6px 16px;background:var(--blue-bg);font-size:12px;color:var(--blue);border-bottom:1px solid var(--border)"></div>
       <div id="productos-list"></div>
+    </div>
+
+    <!-- NOTAS PAGE -->
+    <div id="page-notas" class="page">
+      <div class="search-wrap">
+        <input class="search-input" id="notas-search" placeholder="Buscar por cliente..." oninput="renderNotasPage()">
+      </div>
+      <div id="notas-list"></div>
+      <div style="height:80px"></div>
+      <button class="fab" onclick="nuevaNotaDirecta()">+</button>
     </div>
 
     <!-- GASTOS PAGE -->
@@ -449,6 +467,10 @@
     <button class="nav-btn" onclick="navTo('productos',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       Inventario
+    </button>
+    <button class="nav-btn" onclick="navTo('notas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Notas
     </button>
     <button class="nav-btn" onclick="navTo('gastos',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -686,6 +708,7 @@ function renderCurrentPage(){
   else if(p==='nc') renderNC();
   else if(p==='gastos') renderGastos();
   else if(p==='productos') renderProductos();
+  else if(p==='notas') renderNotasPage();
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -838,7 +861,7 @@ function abrirFormVenta(){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-left:8px">
         <div class="article-total">MXN ${fmt(item.total)}</div>
-        <button class="article-remove" onclick="removeItem(${i})">✕</button>
+        <button class="article-remove" onclick="removeItem(${i})" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;font-size:18px">✕</button>
       </div>
     </div>`;
   });
@@ -879,14 +902,8 @@ function abrirFormVenta(){
 
     <div class="section-row">
       <svg class="section-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      <div class="section-row-label">Ajuste / Redondeo
-        <button onclick="event.stopPropagation();openSheet('<div class=\'sheet-title\'>Ajuste / Redondeo</div><div style=\'padding:16px\'>'+
-          '<p style=\'font-size:15px;line-height:1.7;margin-bottom:12px\'>Úsalo cuando el cliente no tiene cambio exacto o quieres redondear el total.</p>'+
-          '<div style=\'background:var(--bg2);border-radius:8px;padding:12px;font-size:13px;margin-bottom:10px\'><strong>Ejemplo 1:</strong> Total = $73, cliente paga $75 → ajuste <strong>+$2</strong></div>'+
-          '<div style=\'background:var(--bg2);border-radius:8px;padding:12px;font-size:13px\'>'+
-          '<strong>Ejemplo 2:</strong> Total = $73, prefieres cobrar $70 → ajuste <strong>-$3</strong></div>'+
-          '<div style=\'padding:16px 0\'><button class=\'btn btn-primary btn-full\' onclick=\'closeSheet()\'>Entendido</button></div></div>',true)" 
-          style="background:var(--bg2);border:1px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;margin-left:6px;padding:0;color:var(--text2);display:inline-flex;align-items:center;justify-content:center">?</button>
+      <div class="section-row-label" style="display:flex;align-items:center;gap:8px">Ajuste / Redondeo
+        <button onclick="event.stopPropagation();mostrarAyudaAjuste()" style="background:var(--bg2);border:1px solid var(--border);border-radius:50%;min-width:32px;min-height:32px;font-size:16px;cursor:pointer;color:var(--text2);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent">?</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="changeAjuste(-1)" class="qty-btn">−</button>
@@ -907,8 +924,8 @@ function abrirFormVenta(){
         <span>${p.metodo==='banco'?'🏦 Banco':'💵 Efectivo'}${p.pendienteConfirmacion?' (pendiente)':''}</span>
         <div style="display:flex;gap:8px;align-items:center">
           <span style="font-weight:600">MXN ${fmt(p.monto)}</span>
-          <button onclick="editPago(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer">Editar</button>
-          <button onclick="removePago(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>
+          <button onclick="editPago(${i})" class="btn btn-sm" style="font-size:13px;padding:6px 12px;min-height:36px">Editar</button>
+          <button onclick="removePago(${i})" style="background:none;border:1px solid var(--red);border-radius:6px;color:var(--red);cursor:pointer;font-size:16px;width:36px;height:36px;display:flex;align-items:center;justify-content:center">✕</button>
         </div>
       </div>`).join('')}
       <div style="padding:10px 16px">
@@ -925,6 +942,10 @@ function abrirFormVenta(){
     <div style="padding:0 16px 12px">
       <div class="form-label">Nota interna (el cliente NO puede verla)</div>
       <textarea class="form-input" rows="2" style="resize:none" onchange="STATE.currentVenta.notaInterna=this.value">${esc(v.notaInterna||'')}</textarea>
+    </div>
+    <div style="padding:0 16px 12px">
+      <div class="form-label">📦 Nota para próxima entrega <span style="font-size:10px;color:var(--text2)">(aparecerá al crear la siguiente venta a este cliente)</span></div>
+      <textarea class="form-input" rows="2" style="resize:none" id="venta-nota-proxima" placeholder="Ej: Traer factura, cambiar sabor, cliente pide más cantidad...">${esc(v.notaProxima||'')}</textarea>
     </div>
     <div style="padding:0 16px 12px;display:flex;gap:8px">
       <button class="btn btn-full" onclick="abrirMermaEnVenta()" style="color:var(--amber);border-color:var(--amber)">+ Agregar merma</button>
@@ -1060,7 +1081,14 @@ function setCli(id){
   STATE.currentVenta.clienteId=c.id;
   STATE.currentVenta.clienteNombre=c.nombre;
   closeSheet();
-  setTimeout(abrirFormVenta,100);
+  setTimeout(()=>{
+    abrirFormVenta();
+    // Check for alerts and delivery notes after form opens
+    setTimeout(()=>{
+      verificarAlertaCliente(c.id,c.nombre);
+      verificarNotasProximaEntrega(c.id,c.nombre);
+    },300);
+  },100);
 }
 
 function abrirDescuento(){
@@ -1130,6 +1158,17 @@ async function guardarVentaActual(){
 async function guardarVenta(){
   if(!STATE.currentVenta.clienteNombre){ showToast('Selecciona un cliente'); return; }
   if(!STATE.currentVenta.items?.length){ showToast('Agrega al menos un producto'); return; }
+  // Save nota proxima entrega if filled
+  const notaProxima=document.getElementById('venta-nota-proxima')?.value.trim();
+  if(notaProxima){
+    STATE.currentVenta.notaProxima=notaProxima;
+    // Save as nota for next delivery
+    const nota={id:'nota_'+Date.now(),clienteId:STATE.currentVenta.clienteId,clienteNombre:STATE.currentVenta.clienteNombre,texto:notaProxima,proximaEntrega:true,fecha:new Date().toLocaleDateString('es-MX'),creadoPor:STATE.user?.email,ts:Date.now(),mostrada:false};
+    const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
+    notas.push(nota);
+    localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
+    if(_db&&_fbFs){const{collection,addDoc}=_fbFs;addDoc(collection(_db,'notas_clientes'),nota).catch(()=>{});}
+  }
   await guardarVentaActual();
   closeSheet(); renderVentas(); showToast('Venta guardada ✓');
 }
@@ -1196,7 +1235,7 @@ function renderPagos(){
   if(!pagos.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin pagos en este período</div>'; return; }
   list.innerHTML=pagos.map(p=>{
     const d=fmtDateShort(p.fecha);
-    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div></div></div>`;
+    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div><button onclick="event.stopPropagation();imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-sm" style="margin-top:4px;font-size:11px">🖨</button></div></div>`;
   }).join('');
 }
 
@@ -1270,6 +1309,8 @@ function renderClientes(){
     _rutaNombre: c.rutaNombre||getRutaNombre(c.ruta)||'Sin ruta'
   }));
   if(q) clis=clis.filter(c=>c.nombre?.toLowerCase().includes(q)||c._rutaNombre?.toLowerCase().includes(q));
+  // Apply route filter
+  if(_filtroRutasActivas.length>0) clis=clis.filter(c=>_filtroRutasActivas.includes(c._rutaNombre||'Sin ruta'));
   // Sort by ruta name then by client name — ensures grouping works correctly
   clis.sort((a,b)=>{
     const ra=a._rutaNombre||'zzz', rb=b._rutaNombre||'zzz';
@@ -1324,7 +1365,8 @@ function abrirCliente(id){
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-sm btn-primary" onclick="nuevaVentaParaCliente('${c.id}')">+ Venta</button>
         <button class="btn btn-sm btn-green" onclick="nuevoPagoParaCliente('${c.id}')">+ Pago</button>
-        <button class="btn btn-sm" onclick="solicitarAumentoCreditoCliente('${c.id}')">Solicitar aumento crédito</button>
+        <button class="btn btn-sm" onclick="abrirNotasCliente('${c.id}','${esc(c.nombre)}')">📝 Notas</button>
+        <button class="btn btn-sm" onclick="solicitarAumentoCreditoCliente('${c.id}')">Solicitar crédito</button>
         <button class="btn btn-sm" onclick="compartirEstadoCuenta('${c.id}')">📤 WhatsApp</button>
       </div>
     </div>
@@ -1345,7 +1387,8 @@ function abrirCliente(id){
       <div style="padding:6px 16px;font-size:20px;font-weight:700;text-align:right;background:#2d2d2d;color:white">Saldo: MXN ${fmt(c.saldo||0)}</div>
     </div>
     <div style="display:flex;gap:8px;padding:16px;border-top:1px solid var(--border)">
-      <button class="btn" style="flex:1" onclick="compartirEstadoCuenta('${c.id}')">Compartir</button>
+      <button class="btn" style="flex:1" onclick="imprimirEstadoCuenta('${c.id}','${esc(c.nombre)}')">🖨 Imprimir</button>
+      <button class="btn" style="flex:1" onclick="compartirEstadoCuenta('${c.id}')">📤 WhatsApp</button>
       <button class="btn btn-primary" style="flex:1" onclick="closeSheet()">Cerrar</button>
     </div>`;
   openSheet(html);
@@ -1918,25 +1961,39 @@ function aplicarLimiteCreditoDefault(){
 }
 function renderProductos(){
   const list=document.getElementById('productos-list'); if(!list) return;
-  // Use the inventory cache from localStorage (set by ERP on route start)
-  const inventarioCarro = JSON.parse(localStorage.getItem('anakel_inventario_carro')||'[]');
-  const prods = STATE.productos;
-  if(!prods.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin productos cargados en el carro.<br>El inventario se actualiza desde el ERP al iniciar ruta.</div>'; return; }
-  list.innerHTML=`<div style="background:var(--surface)">
-    <div style="padding:12px 16px;background:var(--bg2);font-size:12px;color:var(--text2)">Productos disponibles para vender hoy</div>
-    ${prods.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>`
-      <div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:15px;font-weight:500">${esc(p.nombre||p.sku)}</div>
-          <div style="font-size:12px;color:var(--text2)">${esc(p.sku||'')} · MXN ${fmt(p.precio||0)}${p.unidad?' / '+esc(p.unidad):''}</div>
-        </div>
-        <div style="text-align:right">
-          ${p.iva===true?'<span class="badge badge-blue">IVA 16%</span>':''}
-          ${p.iva==='cero'?'<span class="badge badge-gray">IVA 0%</span>':''}
-          ${p.ieps?'<span class="badge badge-amber">IEPS 8%</span>':''}
-        </div>
-      </div>`).join('')}
-  </div>`;
+  const q=(document.getElementById('prod-inv-search')?.value||'').toLowerCase().trim();
+  let prods=STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo');
+  if(q) prods=prods.filter(p=>(p.nombre||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.categoria||'').toLowerCase().includes(q));
+  if(_filtroCategoriasActivas.length>0) prods=prods.filter(p=>_filtroCategoriasActivas.includes(p.categoria||'Sin categoría'));
+  // Sort by category then name
+  prods.sort((a,b)=>{
+    const ca=a.categoria||'Sin categoría', cb=b.categoria||'Sin categoría';
+    if(ca!==cb) return ca.localeCompare(cb,'es');
+    return (a.nombre||'').localeCompare(b.nombre||'','es');
+  });
+  if(!prods.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin productos.</div>'; return; }
+  let html='<div style="background:var(--surface)">';
+  let lastCat=null;
+  prods.forEach(p=>{
+    const cat=p.categoria||'Sin categoría';
+    if(cat!==lastCat){
+      html+=`<div style="padding:8px 16px;background:var(--bg2);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px">${esc(cat)}</div>`;
+      lastCat=cat;
+    }
+    html+=`<div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:15px;font-weight:500">${esc(p.nombre||p.sku)}</div>
+        <div style="font-size:12px;color:var(--text2)">${esc(p.sku||'')} · MXN ${fmt(p.precio||0)}${p.unidad?' / '+esc(p.unidad):''}</div>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+        ${p.iva===true?'<span class="badge badge-blue" style="font-size:10px">IVA 16%</span>':''}
+        ${p.iva==='cero'?'<span class="badge badge-gray" style="font-size:10px">IVA 0%</span>':''}
+        ${p.ieps?'<span class="badge badge-amber" style="font-size:10px">IEPS 8%</span>':''}
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  list.innerHTML=html;
 }
 
 // ─── AVISO PEDIDOS DEL DÍA ───────────────────────────────────
@@ -1989,31 +2046,36 @@ function setupChoferRealtimeListeners(){
 // ─── MERMAS Y DEVOLUCIONES EN VENTA ──────────────────────────
 function abrirMermaEnVenta(){
   const v=STATE.currentVenta; if(!v) return;
-  const motivos=['Producto aplastado','Merma en ruta','Producto vencido','Daño por temperatura','Otro'];
-  const itemsVenta=v.items||[];
   const html=`<div class="sheet-title">Agregar merma a esta venta</div><div class="sheet-body">
     <div class="alert alert-amber" style="margin:0 16px 12px;font-size:12px">La merma generará una NC enlazada a esta venta y se registrará en el apartado de NC.</div>
     <div class="form-group"><div class="form-label">Producto</div>
-      <select class="form-input form-select" id="mv-producto">
-        ${STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>`<option value="${p.id}">${esc(p.nombre||p.sku)}</option>`).join('')}
+      <select class="form-input form-select" id="mv-producto" onchange="actualizarMotivosMerma(this.value)">
+        ${STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>`<option value="${p.id}" data-sku="${esc(p.sku||'')}">${esc(p.nombre||p.sku)}</option>`).join('')}
       </select></div>
     <div class="form-group"><div class="form-label">Cantidad</div>
       <input type="number" id="mv-cant" class="form-input" value="1" min="0.01" step="0.01"></div>
     <div class="form-group"><div class="form-label">Motivo</div>
-      <select class="form-input form-select" id="mv-motivo">
-        ${motivos.map(m=>`<option value="${m}">${m}</option>`).join('')}
-      </select></div>
+      <select class="form-input form-select" id="mv-motivo"></select></div>
+    <div class="form-group" id="mv-otro-wrap" style="display:none"><div class="form-label">Especifica el motivo</div>
+      <input class="form-input" id="mv-otro" placeholder="Describe qué pasó..."></div>
     <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarMermaEnVenta()">Agregar merma</button></div>
   </div>`;
   openSheet(html,true);
+  // Init motivos for first product
+  setTimeout(()=>{
+    const sel=document.getElementById('mv-producto');
+    if(sel) actualizarMotivosMerma(sel.value);
+  },100);
 }
 
 async function guardarMermaEnVenta(){
   const v=STATE.currentVenta; if(!v) return;
   const prodId=document.getElementById('mv-producto')?.value;
   const cant=parseFloat(document.getElementById('mv-cant')?.value)||1;
-  const motivo=document.getElementById('mv-motivo')?.value;
+  const motivoBase=document.getElementById('mv-motivo')?.value||'';
+  const motivoOtro=document.getElementById('mv-otro')?.value?.trim()||'';
+  const motivo=motivoBase==='Otro'&&motivoOtro?('Otro — '+motivoOtro):motivoBase;
   const p=STATE.productos.find(x=>String(x.id)===String(prodId)); if(!p) return;
   const monto=cant*(p.precio||0);
   if(!v.mermas) v.mermas=[];
@@ -2032,7 +2094,6 @@ async function guardarMermaEnVenta(){
 
 function abrirDevolucionEnVenta(){
   const v=STATE.currentVenta; if(!v) return;
-  const motivos=['Producto dañado','Producto vencido','Error en pedido','No solicitado','Calidad no aceptable','Otro'];
   const html=`<div class="sheet-title">Agregar devolución a esta venta</div><div class="sheet-body">
     <div class="alert alert-amber" style="margin:0 16px 12px;font-size:12px">La devolución generará una NC enlazada a esta venta.</div>
     <div class="form-group"><div class="form-label">Producto</div>
@@ -2043,8 +2104,10 @@ function abrirDevolucionEnVenta(){
       <input type="number" id="dv-cant" class="form-input" value="1" min="0.01" step="0.01"></div>
     <div class="form-group"><div class="form-label">Motivo</div>
       <select class="form-input form-select" id="dv-motivo">
-        ${motivos.map(m=>`<option value="${m}">${m}</option>`).join('')}
+        ${['No se vendió','Cambio por otro producto','Otro'].map(m=>`<option value="${m}">${m}</option>`).join('')}
       </select></div>
+    <div class="form-group" id="dv-otro-wrap" style="display:none"><div class="form-label">Especifica el motivo</div>
+      <input class="form-input" id="dv-otro" placeholder="Describe qué pasó..."></div>
     <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarDevolucionEnVenta()">Agregar devolución</button></div>
   </div>`;
@@ -2055,7 +2118,9 @@ async function guardarDevolucionEnVenta(){
   const v=STATE.currentVenta; if(!v) return;
   const prodId=document.getElementById('dv-producto')?.value;
   const cant=parseFloat(document.getElementById('dv-cant')?.value)||1;
-  const motivo=document.getElementById('dv-motivo')?.value;
+  const motivoBase=document.getElementById('dv-motivo')?.value||'';
+  const motivoOtro=document.getElementById('dv-otro')?.value?.trim()||'';
+  const motivo=motivoBase==='Otro'&&motivoOtro?('Otro — '+motivoOtro):motivoBase;
   const p=STATE.productos.find(x=>String(x.id)===String(prodId)); if(!p) return;
   const monto=cant*(p.precio||0);
   if(!v.devoluciones) v.devoluciones=[];
@@ -2099,6 +2164,330 @@ window.addEventListener('popstate', e=>{
   if(sheetStack.length>0){ closeSheet(); history.pushState(null,'',location.href); }
 });
 history.pushState(null,'',location.href);
+
+
+// ─── ESTADO FILTROS (persisten en sesión) ────────────────────
+let _filtroRutasActivas = []; // [] = todas
+let _filtroCategoriasActivas = []; // [] = todas
+
+// ─── FILTRO DE RUTAS EN CLIENTES ─────────────────────────────
+function abrirFiltroRutas(){
+  const rutas=[...new Set(STATE.clientes.filter(c=>c.activo!==false).map(c=>c.rutaNombre||c._rutaNombre||'Sin ruta'))].sort((a,b)=>a.localeCompare(b,'es'));
+  const html=`<div class="sheet-title">Filtrar por ruta</div><div class="sheet-body">
+    <div style="padding:0 16px 10px;display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fr-chk-]').forEach(c=>c.checked=true)">Todas</button>
+      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fr-chk-]').forEach(c=>c.checked=false)">Ninguna</button>
+    </div>
+    <div style="background:var(--surface)">
+      ${rutas.map((r,i)=>`<label style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer">
+        <input type="checkbox" id="fr-chk-${i}" value="${esc(r)}" ${_filtroRutasActivas.length===0||_filtroRutasActivas.includes(r)?'checked':''} style="width:18px;height:18px">
+        <span style="font-size:15px">${esc(r)}</span>
+      </label>`).join('')}
+    </div>
+    <div class="action-bar">
+      <button class="btn" onclick="closeSheet()">Cancelar</button>
+      <button class="btn btn-primary" onclick="aplicarFiltroRutas()">Aplicar</button>
+    </div>
+  </div>`;
+  openSheet(html);
+}
+
+function aplicarFiltroRutas(){
+  const checks=document.querySelectorAll('[id^=fr-chk-]');
+  const seleccionadas=[...checks].filter(c=>c.checked).map(c=>c.value);
+  const todas=seleccionadas.length===checks.length;
+  _filtroRutasActivas=todas?[]:seleccionadas;
+  const bar=document.getElementById('cli-filtro-activo');
+  const btn=document.getElementById('btn-filtro-rutas');
+  if(bar){
+    if(_filtroRutasActivas.length>0){
+      bar.style.display='';
+      bar.innerHTML=`Filtrando: ${_filtroRutasActivas.map(r=>`<strong>${esc(r)}</strong>`).join(', ')} <button onclick="_filtroRutasActivas=[];renderClientes();document.getElementById('cli-filtro-activo').style.display='none';document.getElementById('btn-filtro-rutas').textContent='Ruta ▾'" style="margin-left:8px;background:none;border:none;cursor:pointer;color:var(--amber);font-weight:700">✕ Quitar</button>`;
+      if(btn) btn.textContent='Ruta ✓';
+    } else {
+      bar.style.display='none';
+      if(btn) btn.textContent='Ruta ▾';
+    }
+  }
+  closeSheet();
+  renderClientes();
+}
+
+// ─── FILTRO DE CATEGORÍAS EN PRODUCTOS ───────────────────────
+function abrirFiltroCategorias(){
+  const cats=[...new Set(STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>p.categoria||'Sin categoría'))].sort((a,b)=>a.localeCompare(b,'es'));
+  const html=`<div class="sheet-title">Filtrar por categoría</div><div class="sheet-body">
+    <div style="padding:0 16px 10px;display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fc-chk-]').forEach(c=>c.checked=true)">Todas</button>
+      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fc-chk-]').forEach(c=>c.checked=false)">Ninguna</button>
+    </div>
+    <div style="background:var(--surface)">
+      ${cats.map((cat,i)=>`<label style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer">
+        <input type="checkbox" id="fc-chk-${i}" value="${esc(cat)}" ${_filtroCategoriasActivas.length===0||_filtroCategoriasActivas.includes(cat)?'checked':''} style="width:18px;height:18px">
+        <span style="font-size:15px">${esc(cat)}</span>
+      </label>`).join('')}
+    </div>
+    <div class="action-bar">
+      <button class="btn" onclick="closeSheet()">Cancelar</button>
+      <button class="btn btn-primary" onclick="aplicarFiltroCategorias()">Aplicar</button>
+    </div>
+  </div>`;
+  openSheet(html);
+}
+
+function aplicarFiltroCategorias(){
+  const checks=document.querySelectorAll('[id^=fc-chk-]');
+  const seleccionadas=[...checks].filter(c=>c.checked).map(c=>c.value);
+  const todas=seleccionadas.length===checks.length;
+  _filtroCategoriasActivas=todas?[]:seleccionadas;
+  const bar=document.getElementById('prod-filtro-activo');
+  const btn=document.getElementById('btn-filtro-cats');
+  if(bar){
+    if(_filtroCategoriasActivas.length>0){
+      bar.style.display='';
+      bar.innerHTML=`${_filtroCategoriasActivas.join(', ')} <button onclick="_filtroCategoriasActivas=[];renderProductos();document.getElementById('prod-filtro-activo').style.display='none';document.getElementById('btn-filtro-cats').textContent='Cat. ▾'" style="margin-left:8px;background:none;border:none;cursor:pointer;color:var(--blue);font-weight:700">✕</button>`;
+      if(btn) btn.textContent='Cat. ✓';
+    } else {
+      bar.style.display='none';
+      if(btn) btn.textContent='Cat. ▾';
+    }
+  }
+  closeSheet();
+  renderProductos();
+}
+
+// ─── NOTAS POR CLIENTE ───────────────────────────────────────
+function renderNotasPage(){
+  const list=document.getElementById('notas-list'); if(!list) return;
+  const q=(document.getElementById('notas-search')?.value||'').toLowerCase().trim();
+  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
+  let filtradas=notas.slice().reverse();
+  if(q) filtradas=filtradas.filter(n=>(n.clienteNombre||'').toLowerCase().includes(q)||(n.texto||'').toLowerCase().includes(q));
+  if(!filtradas.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin notas. Agrega notas desde la ficha de un cliente.</div>'; return; }
+  list.innerHTML='<div style="background:var(--surface)">'+filtradas.map(n=>`
+    <div style="padding:13px 16px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:13px;font-weight:600;color:var(--accent)">${esc(n.clienteNombre||'')}</div>
+        <div style="font-size:11px;color:var(--text3)">${n.fecha||''}</div>
+      </div>
+      <div style="font-size:14px;line-height:1.5">${esc(n.texto||'')}</div>
+      ${n.proximaEntrega?`<div style="margin-top:6px;padding:4px 8px;background:var(--amber-bg);border-radius:6px;font-size:12px;color:var(--amber)">📦 Para próxima entrega</div>`:''}
+    </div>`).join('')+'</div>';
+}
+
+function nuevaNotaDirecta(){
+  const html=`<div class="sheet-title">Nueva nota</div><div class="sheet-body">
+    <div class="form-group"><div class="form-label">Cliente</div>
+      <input class="form-input" id="nn-cliente" list="nn-cli-list" placeholder="Buscar cliente...">
+      <datalist id="nn-cli-list">${STATE.clientes.map(c=>`<option value="${esc(c.nombre)}"></option>`).join('')}</datalist>
+    </div>
+    <div class="form-group"><div class="form-label">Nota</div>
+      <textarea class="form-input" id="nn-texto" rows="4" style="resize:none" placeholder="Escribe la nota..."></textarea>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="nn-proxima" style="width:18px;height:18px">
+        <span style="font-size:14px">Es para la próxima entrega (aparecerá al crear venta)</span>
+      </label>
+    </div>
+    <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNotaCliente()">Guardar nota</button></div>
+  </div>`;
+  openSheet(html);
+}
+
+function guardarNotaInlineCliente(clienteId, clienteNombre){
+  const texto=document.getElementById('nota-nueva-texto')?.value.trim();
+  if(!texto){ showToast('Escribe una nota'); return; }
+  const nota={id:'nota_'+Date.now(),clienteId,clienteNombre,texto,proximaEntrega:document.getElementById('nota-nueva-proxima')?.checked||false,fecha:new Date().toLocaleDateString('es-MX'),creadoPor:STATE.user?.email,ts:Date.now(),mostrada:false};
+  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
+  notas.push(nota);
+  localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
+  if(_db&&_fbFs){const{collection,addDoc}=_fbFs;addDoc(collection(_db,'notas_clientes'),nota).catch(()=>{});}
+  closeSheet();
+  showToast('Nota guardada ✓');
+}
+
+function guardarNotaCliente(clienteNombre, clienteId){
+  const nombre=clienteNombre||document.getElementById('nn-cliente')?.value.trim();
+  const texto=document.getElementById('nn-texto')?.value.trim();
+  const proximaEntrega=document.getElementById('nn-proxima')?.checked||false;
+  if(!nombre||!texto){ showToast('Completa todos los campos'); return; }
+  const cli=STATE.clientes.find(c=>c.nombre===nombre);
+  const nota={id:'nota_'+Date.now(),clienteId:clienteId||cli?.id,clienteNombre:nombre,texto,proximaEntrega,fecha:new Date().toLocaleDateString('es-MX'),creadoPor:STATE.user?.email,ts:Date.now()};
+  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
+  notas.push(nota);
+  localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
+  // Also save to Firebase
+  if(_db&&_fbFs){
+    const {collection,addDoc}=_fbFs;
+    addDoc(collection(_db,'notas_clientes'),nota).catch(()=>{});
+  }
+  closeSheet();
+  renderNotasPage();
+  showToast('Nota guardada ✓');
+}
+
+function abrirNotasCliente(clienteId, clienteNombre){
+  const todasNotas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
+  const notasCli=todasNotas.filter(n=>String(n.clienteId)===String(clienteId)||n.clienteNombre===clienteNombre).slice().reverse();
+  const html=`<div class="sheet-title">📝 Notas — ${esc(clienteNombre)}</div><div class="sheet-body">
+    ${notasCli.length?notasCli.map(n=>`
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <div style="font-size:12px;color:var(--text2)">${n.fecha||''} · ${esc(n.creadoPor||'')}</div>
+          ${n.proximaEntrega?'<span class="badge badge-amber">Próxima entrega</span>':''}
+        </div>
+        <div style="font-size:14px;line-height:1.5">${esc(n.texto||'')}</div>
+      </div>`).join('')
+    :'<div style="padding:30px;text-align:center;color:var(--text3)">Sin notas para este cliente</div>'}
+    <div style="padding:12px 16px;border-top:1px solid var(--border)">
+      <textarea class="form-input" id="nota-nueva-texto" rows="3" style="resize:none;margin-bottom:8px" placeholder="Agregar nueva nota..."></textarea>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">
+        <input type="checkbox" id="nota-nueva-proxima" style="width:16px;height:16px">
+        <span style="font-size:13px">Para próxima entrega</span>
+      </label>
+      <button class="btn btn-primary btn-full" onclick="guardarNotaInlineCliente('${clienteId}','${esc(clienteNombre)}')">Guardar nota</button>
+    </div>
+  </div>`;
+  openSheet(html,true);
+}
+
+function verificarNotasProximaEntrega(clienteId, clienteNombre){
+  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
+  const pendientes=notas.filter(n=>(String(n.clienteId)===String(clienteId)||n.clienteNombre===clienteNombre)&&n.proximaEntrega&&!n.mostrada);
+  if(pendientes.length){
+    // Mark as shown
+    notas.forEach(n=>{ if(pendientes.find(p=>p.id===n.id)) n.mostrada=true; });
+    localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
+    // Show alert
+    const msgs=pendientes.map(n=>n.texto).join('\n\n');
+    openSheet(`<div class="sheet-title">📦 Notas para esta entrega</div><div style="padding:16px">
+      <div style="background:var(--amber-bg);border-radius:10px;padding:14px;font-size:15px;line-height:1.7;color:var(--text);white-space:pre-wrap">${esc(msgs)}</div>
+      <div style="margin-top:16px"><button class="btn btn-primary btn-full btn-lg" onclick="closeSheet()">Entendido</button></div>
+    </div>`,true);
+  }
+}
+
+// ─── ALERTAS POR CLIENTE ─────────────────────────────────────
+function verificarAlertaCliente(clienteId, clienteNombre){
+  const c=STATE.clientes.find(x=>String(x.id)===String(clienteId));
+  if(!c?.alerta) return;
+  openSheet(`<div class="sheet-title">⚠️ Alerta — ${esc(clienteNombre)}</div><div style="padding:16px">
+    <div style="background:var(--red-bg);border-radius:10px;padding:14px;font-size:15px;line-height:1.7;color:var(--red);font-weight:500">${esc(c.alerta)}</div>
+    <div style="margin-top:16px"><button class="btn btn-primary btn-full btn-lg" onclick="closeSheet()">Aceptar</button></div>
+  </div>`,true);
+}
+
+
+// ─── AYUDA AJUSTE REDONDEO ───────────────────────────────────
+function mostrarAyudaAjuste(){
+  openSheet(`<div class="sheet-title">Ajuste / Redondeo</div><div style="padding:20px">
+    <p style="font-size:15px;line-height:1.8;margin-bottom:16px">Úsalo cuando el cliente no tiene cambio exacto o quieres redondear el total.</p>
+    <div style="background:var(--bg2);border-radius:10px;padding:14px;font-size:14px;margin-bottom:12px">
+      <strong>Ejemplo 1:</strong><br>Total = $73, cliente paga $75<br>→ Ajuste <strong style="color:var(--green)">+$2</strong>
+    </div>
+    <div style="background:var(--bg2);border-radius:10px;padding:14px;font-size:14px;margin-bottom:20px">
+      <strong>Ejemplo 2:</strong><br>Total = $73, prefieres cobrar $70<br>→ Ajuste <strong style="color:var(--red)">-$3</strong>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="closeSheet()">Entendido</button>
+  </div>`, true);
+}
+
+// ─── MERMA MOTIVOS POR PRODUCTO (igual que ERP) ───────────────
+const MERMA_GRUPOS_CHOFER = {
+  tortillas:['LUN10NAT','LUN10INT','LUN8BUR'],
+  mia:['MIA500NAT','MIA500INT','MIA500MAN','MIA500NOP','MIA1KNAT','MIA1KMAN'],
+  buñuelos:['10BUÑ'],
+  mazapanes:['ELIMAZAZU','ELIMAZSTE','ELIMAZSUF'],
+};
+const MERMA_MOTIVOS_CHOFER = {
+  tortillas:['Se caducó antes de tiempo','Caducidad expirada','Orillas rotas','Tortillas dobladas','Sello de empaque roto','Producto maltratado'],
+  mia:['Se caducó antes de tiempo','Caducidad expirada','Sello de empaque roto','Producto maltratado'],
+  buñuelos:['Producto maltratado','Sello de empaque roto'],
+  mazapanes:['Caducidad expirada'],
+};
+
+function getMermaMotivosChofer(sku){
+  const skuN=(sku||'').toUpperCase().trim();
+  for(const [grupo,skus] of Object.entries(MERMA_GRUPOS_CHOFER)){
+    if(skus.includes(skuN)) return [...(MERMA_MOTIVOS_CHOFER[grupo]||[]),'Otro'];
+  }
+  return ['Se caducó antes de tiempo','Caducidad expirada','Producto maltratado','Sello de empaque roto','Otro'];
+}
+
+function actualizarMotivosMerma(prodId){
+  const p=STATE.productos.find(x=>String(x.id)===String(prodId));
+  const motivos=getMermaMotivosChofer(p?.sku||'');
+  const sel=document.getElementById('mv-motivo');
+  if(!sel) return;
+  sel.innerHTML=motivos.map(m=>`<option value="${m}">${m}</option>`).join('');
+  const otroWrap=document.getElementById('mv-otro-wrap');
+  if(otroWrap) sel.onchange=()=>{ otroWrap.style.display=sel.value==='Otro'?'':'none'; };
+}
+
+// ─── PRINT FUNCTIONS ─────────────────────────────────────────
+async function imprimirPago(pago){
+  const lines=[
+    'ANAKEL DISTRIBUIDORA',
+    '================================',
+    'COMPROBANTE DE PAGO',
+    '--------------------------------',
+    `No: PAG-${pago.numero||pago.id}`,
+    `Fecha: ${new Date(pago.fecha||Date.now()).toLocaleDateString('es-MX')}`,
+    `Cliente: ${pago.clienteNombre||''}`,
+    '--------------------------------',
+    `Método: ${pago.metodo==='banco'?'Transferencia/Banco':'Efectivo'}`,
+    `MONTO:  MXN ${fmt(pago.monto||0)}`,
+    '================================',
+    '¡Gracias por su pago!'
+  ];
+  await printLines58(lines.join('\n'));
+}
+
+async function imprimirEstadoCuenta(clienteId, clienteNombre){
+  const c=STATE.clientes.find(x=>String(x.id)===String(clienteId));
+  const ventas=STATE.ventas.filter(v=>String(v.clienteId)===String(clienteId)&&v.tipo==='venta').slice(0,20);
+  const pagos=STATE.pagos.filter(p=>String(p.clienteId)===String(clienteId)).slice(0,20);
+  const txs=[
+    ...ventas.map(v=>({fecha:v.fecha,tipo:'V',num:v.numero,monto:v.total})),
+    ...pagos.map(p=>({fecha:p.fecha,tipo:'P',num:p.numero,monto:p.monto})),
+  ].sort((a,b)=>new Date(a.fecha||0)-new Date(b.fecha||0));
+  const lines=[
+    'ANAKEL DISTRIBUIDORA',
+    '================================',
+    'ESTADO DE CUENTA',
+    `${clienteNombre}`,
+    `Fecha: ${new Date().toLocaleDateString('es-MX')}`,
+    '--------------------------------',
+    ...txs.map(t=>`${t.tipo==='V'?'VTA':'PAG'} ${(t.num||'').padEnd(8)} $${fmt(t.monto)}`),
+    '--------------------------------',
+    `Saldo actual: MXN ${fmt(c?.saldo||0)}`,
+    `Límite cred:  MXN ${fmt(c?.limiteCredito||0)}`,
+    '================================',
+  ];
+  await printLines58(lines.join('\n'));
+}
+
+async function printLines58(text){
+  if(!navigator.bluetooth){ 
+    showToast('Bluetooth no disponible — copia el texto para compartir');
+    if(navigator.share) navigator.share({title:'Ticket Anakel',text});
+    return; 
+  }
+  try{
+    showToast('Buscando impresora...');
+    const device=await navigator.bluetooth.requestDevice({
+      filters:[{name:'PT-220'},{namePrefix:'Printer'},{namePrefix:'PT'}],
+      optionalServices:['000018f0-0000-1000-8000-00805f9b34fb']
+    });
+    const server=await device.gatt.connect();
+    const service=await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+    const char=await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+    await char.writeValue(new TextEncoder().encode(text+'\n\n\n'));
+    showToast('Impreso ✓');
+  }catch(e){ showToast('No se pudo conectar a la impresora'); }
+}
 
 // ─── DARK MODE ───────────────────────────────────────────────
 function initDarkMode(){
