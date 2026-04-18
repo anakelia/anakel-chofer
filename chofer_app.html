@@ -1255,19 +1255,27 @@ function renderClientes(){
   const getRutaNombre=id=>{
     if(!id) return 'Sin ruta';
     const sid=String(id);
-    // Try exact match by id
+    // Try exact match by id in rutas collection
     let r=rutas.find(r=>String(r.id)===sid);
-    // Try by nombre (sometimes ruta field stores the name directly)
     if(!r) r=rutas.find(r=>r.nombre===id||String(r.nombre)===sid);
     if(r) return r.nombre||'Sin ruta';
     // If it looks like a timestamp ID with no match, hide it
     if(/^\d{10,}$/.test(sid)) return 'Sin ruta';
-    // Short numeric (legacy) — show as-is only if short
     if(/^\d{1,3}$/.test(sid)) return 'Ruta '+sid;
     return sid.length>20?'Sin ruta':sid;
   };
-  let clis=STATE.clientes.filter(c=>c.activo!==false).map(c=>({...c,_rutaNombre:getRutaNombre(c.ruta)}));
+  let clis=STATE.clientes.filter(c=>c.activo!==false).map(c=>({
+    ...c,
+    // Use rutaNombre if already resolved by ERP, otherwise resolve locally
+    _rutaNombre: c.rutaNombre||getRutaNombre(c.ruta)||'Sin ruta'
+  }));
   if(q) clis=clis.filter(c=>c.nombre?.toLowerCase().includes(q)||c._rutaNombre?.toLowerCase().includes(q));
+  // Sort by ruta name then by client name
+  clis.sort((a,b)=>{
+    const ra=a._rutaNombre||'Sin ruta', rb=b._rutaNombre||'Sin ruta';
+    if(ra!==rb) return ra.localeCompare(rb,'es');
+    return (a.nombre||'').localeCompare(b.nombre||'','es');
+  });
   clis=clis.slice(0,100);
   if(!clis.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados para "'+esc(q)+'"':'Sin clientes'}</div>`; return; }
   const lastRuta={};
