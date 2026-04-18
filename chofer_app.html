@@ -33,6 +33,38 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
   }
+  .dark {
+    --bg: #0d0d0f;
+    --bg2: #1a1a1f;
+    --surface: #1c1c22;
+    --border: #2d2d35;
+    --text: #f0f0f5;
+    --text2: #9999a8;
+    --text3: #55555f;
+    --accent: #4a6fa5;
+    --accent2: #3a5a90;
+    --green: #2fb573;
+    --green-bg: #0d2b1a;
+    --red: #e05252;
+    --red-bg: #2b0d0d;
+    --amber: #d4a035;
+    --amber-bg: #2b2000;
+    --blue: #4a7ab5;
+    --blue-bg: #0d1a2b;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  .dark #topbar { background: #16161c; border-bottom-color: var(--border); }
+  .dark #bottomnav { background: #16161c; border-top-color: var(--border); }
+  .dark #login-screen { background: #0d0d12; }
+  .dark .login-field { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+  .dark .total-bar { background: #111116; }
+  .dark .saldo-bar { background: #222228; }
+  .dark .articles-bar { background: #222228; }
+  .dark .client-bar { background: #2a3a5a; }
+  .dark .offline-banner { background: #6b4800; }
+  .dark #sync-bar { background: #16161c; }
+  .dark .search-input { background: var(--bg2); color: var(--text); }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
 
@@ -275,6 +307,13 @@
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="sync-indicator" class="sync-dot"></span>
+      <button onclick="mostrarMenuPermisos()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2)" title="Permisos" id="btn-permisos">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.41 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      </button>
+      <button onclick="toggleDarkMode()" id="btn-darkmode" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2)" title="Modo oscuro">
+        <svg id="icon-sol" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="icon-luna" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
       <button onclick="mostrarNotificacionesChofer()" style="background:none;border:none;cursor:pointer;padding:4px;position:relative" title="Notificaciones">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span id="chofer-notif-badge" style="display:none;position:absolute;top:-3px;right:-3px;background:#c0392b;color:white;border-radius:10px;font-size:9px;min-width:15px;height:15px;align-items:center;justify-content:center;padding:0 3px;font-weight:700"></span>
@@ -292,11 +331,7 @@
   <div id="content">
     <!-- VENTAS PAGE -->
     <div id="page-ventas" class="page active">
-      <div class="filter-tabs">
-        <button class="filter-tab active" onclick="setVentasFilter('todas',this)">Todas</button>
-        <button class="filter-tab" onclick="setVentasFilter('pendiente',this)">No recibido</button>
-        <button class="filter-tab" onclick="setVentasFilter('recibido',this)">Recibido</button>
-      </div>
+
       <div class="month-nav">
         <button class="month-nav-btn" onclick="changePeriod(-1)">&#8249;</button>
         <div>
@@ -476,7 +511,10 @@ async function initFirebase(){
       loadAllData().then(()=>{
         verificarPedidosDelDia();
         setupChoferRealtimeListeners();
+        loadPermisosFromFirebase();
         _lastSyncTime=new Date(); updateSyncBar();
+        // Show permisos button only for admin
+        const pb=document.getElementById("btn-permisos"); if(pb) pb.style.display=user.email===ADMIN_EMAIL?"":"none";
       });
       processQueue();
     } else {
@@ -729,6 +767,10 @@ function nuevaVenta(){
   abrirFormVenta();
 }
 
+function abrirVentaPorNumero(num){
+  const v=STATE.ventas.find(x=>x.numero===num); if(!v){ showToast('Venta no encontrada'); return; }
+  abrirVenta(v.id);
+}
 function abrirVenta(id){
   const v = STATE.ventas.find(x=>x.id===id);
   if(!v) return;
@@ -782,13 +824,19 @@ function abrirFormVenta(){
   let itemsHTML = '';
   (v.items||[]).forEach((item,i)=>{
     const taxInfo = calcTax(item);
-    itemsHTML+=`<div class="article-row">
-      <div class="article-info">
+    itemsHTML+=`<div class="article-row" style="flex-wrap:wrap">
+      <div class="article-info" style="flex:1;min-width:150px">
         <div class="article-name">${esc(item.nombre)}</div>
-        <div class="article-detail">${fmt(item.cantidad)} u. × MXN ${fmt(item.precio)}</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+          <button onclick="editItemQty(${i},-1)" class="qty-btn" style="width:26px;height:26px;font-size:14px">−</button>
+          <input type="number" value="${item.cantidad}" min="0.01" step="0.01" style="width:55px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px;font-size:14px;font-weight:600" onchange="editItemCant(${i},this.value)" onclick="this.select()">
+          <button onclick="editItemQty(${i},1)" class="qty-btn" style="width:26px;height:26px;font-size:14px">+</button>
+          <span style="font-size:12px;color:var(--text2)">× MXN</span>
+          <input type="number" value="${item.precio}" min="0" step="0.01" style="width:65px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px;font-size:13px" onchange="editItemPrecio(${i},this.value)" onclick="this.select()">
+        </div>
         ${taxInfo.html}
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-left:8px">
         <div class="article-total">MXN ${fmt(item.total)}</div>
         <button class="article-remove" onclick="removeItem(${i})">✕</button>
       </div>
@@ -832,7 +880,13 @@ function abrirFormVenta(){
     <div class="section-row">
       <svg class="section-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       <div class="section-row-label">Ajuste / Redondeo
-        <button onclick="event.stopPropagation();alert('Ajuste / Redondeo:\n\nÚsalo cuando el cliente no tiene cambio exacto.\n\nEjemplo: Total = $73, cliente paga $75 → ajuste +$2.\nO si prefieres cobrar $70 → ajuste -$3.\n\nEl ajuste suma o resta al total final de la venta.')" style="background:none;border:1px solid var(--border);border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;margin-left:6px;padding:0;color:var(--text2)">?</button>
+        <button onclick="event.stopPropagation();openSheet('<div class=\'sheet-title\'>Ajuste / Redondeo</div><div style=\'padding:16px\'>'+
+          '<p style=\'font-size:15px;line-height:1.7;margin-bottom:12px\'>Úsalo cuando el cliente no tiene cambio exacto o quieres redondear el total.</p>'+
+          '<div style=\'background:var(--bg2);border-radius:8px;padding:12px;font-size:13px;margin-bottom:10px\'><strong>Ejemplo 1:</strong> Total = $73, cliente paga $75 → ajuste <strong>+$2</strong></div>'+
+          '<div style=\'background:var(--bg2);border-radius:8px;padding:12px;font-size:13px\'>'+
+          '<strong>Ejemplo 2:</strong> Total = $73, prefieres cobrar $70 → ajuste <strong>-$3</strong></div>'+
+          '<div style=\'padding:16px 0\'><button class=\'btn btn-primary btn-full\' onclick=\'closeSheet()\'>Entendido</button></div></div>',true)" 
+          style="background:var(--bg2);border:1px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;margin-left:6px;padding:0;color:var(--text2);display:inline-flex;align-items:center;justify-content:center">?</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="changeAjuste(-1)" class="qty-btn">−</button>
@@ -849,9 +903,13 @@ function abrirFormVenta(){
         <div class="section-row-label">Pagos recibidos</div>
         <div class="section-row-value">(-) MXN ${fmt(v.pagado||0)}</div>
       </div>
-      ${(v.pagos||[]).map((p,i)=>`<div style="padding:6px 16px 6px 56px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
-        <span>${p.metodo==='banco'?'🏦 Banco':'💵 Efectivo'}${p.pendienteConfirmacion?' (pendiente confirmar)':''}</span>
-        <span style="font-weight:600">MXN ${fmt(p.monto)}</span>
+      ${(v.pagos||[]).map((p,i)=>`<div style="padding:6px 16px 6px 56px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span>${p.metodo==='banco'?'🏦 Banco':'💵 Efectivo'}${p.pendienteConfirmacion?' (pendiente)':''}</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-weight:600">MXN ${fmt(p.monto)}</span>
+          <button onclick="editPago(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer">Editar</button>
+          <button onclick="removePago(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>
+        </div>
       </div>`).join('')}
       <div style="padding:10px 16px">
         <button class="btn btn-full" onclick="abrirPagoVenta()" style="border-style:dashed">+ Agregar pago</button>
@@ -886,6 +944,60 @@ function abrirFormVenta(){
 }
 
 function removeItem(idx){ STATE.currentVenta.items.splice(idx,1); abrirFormVenta(); }
+function editItemQty(idx,dir){
+  const item=STATE.currentVenta.items[idx]; if(!item) return;
+  const newQty=Math.max(0.01,(item.cantidad||1)+dir);
+  STATE.currentVenta.items[idx]={...item,cantidad:newQty,total:newQty*(item.precio||0)};
+  abrirFormVenta();
+}
+function editItemCant(idx,val){
+  const item=STATE.currentVenta.items[idx]; if(!item) return;
+  const qty=parseFloat(val)||0;
+  STATE.currentVenta.items[idx]={...item,cantidad:qty,total:qty*(item.precio||0)};
+  // Don't re-render (user is typing) — just update total display
+}
+function editItemPrecio(idx,val){
+  const item=STATE.currentVenta.items[idx]; if(!item) return;
+  const precio=parseFloat(val)||0;
+  STATE.currentVenta.items[idx]={...item,precio,total:(item.cantidad||1)*precio};
+}
+function removePago(idx){
+  const pagos=STATE.currentVenta.pagos||[];
+  const pago=pagos[idx];
+  STATE.currentVenta.pagado=Math.max(0,(STATE.currentVenta.pagado||0)-(pago?.monto||0));
+  STATE.currentVenta.pagos.splice(idx,1);
+  abrirFormVenta();
+}
+function editPago(idx){
+  const pago=STATE.currentVenta.pagos?.[idx]; if(!pago) return;
+  const html=`<div class="sheet-title">Editar pago</div><div class="sheet-body">
+    <div class="form-group"><div class="form-label">Método</div>
+      <div class="pago-methods">
+        <div class="pago-method ${pago.metodo==='banco'?'':'selected'}" id="ep-met-efectivo" onclick="selectEpMet('efectivo')"><div class="pago-method-icon">💵</div><div class="pago-method-label">Efectivo</div></div>
+        <div class="pago-method ${pago.metodo==='banco'?'selected':''}" id="ep-met-banco" onclick="selectEpMet('banco')"><div class="pago-method-icon">🏦</div><div class="pago-method-label">Banco</div></div>
+      </div></div>
+    <div class="form-group"><div class="form-label">Monto (MXN)</div>
+      <input type="number" id="ep-monto" class="form-input" value="${pago.monto}" step="0.01" style="font-size:22px;font-weight:700;text-align:right"></div>
+    <div class="action-bar">
+      <button class="btn" onclick="closeSheet()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEditPago(${idx})">Guardar</button>
+    </div>
+  </div>`;
+  openSheet(html,true);
+}
+function selectEpMet(m){
+  document.querySelectorAll('#overlay .pago-method').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('ep-met-'+m)?.classList.add('selected');
+}
+function guardarEditPago(idx){
+  const monto=parseFloat(document.getElementById('ep-monto')?.value)||0;
+  const isBanco=document.getElementById('ep-met-banco')?.classList.contains('selected');
+  const pago=STATE.currentVenta.pagos?.[idx]; if(!pago) return;
+  const diff=monto-(pago.monto||0);
+  STATE.currentVenta.pagado=(STATE.currentVenta.pagado||0)+diff;
+  STATE.currentVenta.pagos[idx]={...pago,monto,metodo:isBanco?'banco':'efectivo'};
+  closeSheet(); setTimeout(abrirFormVenta,100);
+}
 function changeAjuste(dir){ STATE.currentVenta.ajuste=(STATE.currentVenta.ajuste||0)+dir; abrirFormVenta(); }
 
 function abrirBuscadorProductos(){
@@ -1142,9 +1254,17 @@ function renderClientes(){
   const rutas=STATE.rutas||[];
   const getRutaNombre=id=>{
     if(!id) return 'Sin ruta';
-    // id can be numeric or string from Firebase
-    const r=rutas.find(r=>String(r.id)===String(id)||r.nombre===id);
-    return r?.nombre||String(id)||'Sin ruta';
+    const sid=String(id);
+    // Try exact match by id
+    let r=rutas.find(r=>String(r.id)===sid);
+    // Try by nombre (sometimes ruta field stores the name directly)
+    if(!r) r=rutas.find(r=>r.nombre===id||String(r.nombre)===sid);
+    if(r) return r.nombre||'Sin ruta';
+    // If it looks like a timestamp ID with no match, hide it
+    if(/^\d{10,}$/.test(sid)) return 'Sin ruta';
+    // Short numeric (legacy) — show as-is only if short
+    if(/^\d{1,3}$/.test(sid)) return 'Ruta '+sid;
+    return sid.length>20?'Sin ruta':sid;
   };
   let clis=STATE.clientes.filter(c=>c.activo!==false).map(c=>({...c,_rutaNombre:getRutaNombre(c.ruta)}));
   if(q) clis=clis.filter(c=>c.nombre?.toLowerCase().includes(q)||c._rutaNombre?.toLowerCase().includes(q));
@@ -1297,7 +1417,7 @@ function renderNC(){
   if(!notas.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados':'Sin NC por '+(STATE.ncTab==='devolucion'?'devolución':'merma')}</div>`; return; }
   list.innerHTML=notas.map(n=>{
     const dt=fmtDateShort(n.fecha);
-    const enlace=n.ventaEnlaceNum?`<span style="font-size:10px;color:var(--blue)"> enlazada a ${esc(n.ventaEnlaceNum)}</span>`:'';
+    const enlace=n.ventaEnlaceNum?`<button onclick="event.stopPropagation();abrirVentaPorNumero('${esc(n.ventaEnlaceNum)}')" style="background:none;border:none;color:var(--blue);font-size:10px;cursor:pointer;padding:0;text-decoration:underline"> → ${esc(n.ventaEnlaceNum)}</button>`:'';
     return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(n.numero||'')} <span class="badge badge-red">${STATE.ncTab==='devolucion'?'Devolución':'Merma'}</span>${enlace}</div><div class="doc-client">${esc(n.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-red">(-) MXN ${fmt(n.monto)}</div></div></div>`;
   }).join('');
 }
@@ -1663,6 +1783,113 @@ function updateSyncBar(){
 
 // ─── INVENTARIO DEL CARRO ────────────────────────────────────
 
+
+// ─── PERMISOS POR USUARIO ────────────────────────────────────
+const PERMISOS_DEFAULT_CHOFER = {
+  editarVentasGuardadas: false,
+  eliminarDirecto: false,
+  verPreciosCosto: false,
+  cambiarPrecioVenta: true,
+  aplicarDescuentos: false,
+  verSaldosTodos: true,
+  aumentarCreditoDirecto: false,
+  verInformesFinanzas: false,
+};
+const PERMISOS_DEFAULT_ADMIN = {
+  editarVentasGuardadas: true,
+  eliminarDirecto: true,
+  verPreciosCosto: true,
+  cambiarPrecioVenta: true,
+  aplicarDescuentos: true,
+  verSaldosTodos: true,
+  aumentarCreditoDirecto: true,
+  verInformesFinanzas: true,
+};
+const PERMISOS_LABELS = {
+  editarVentasGuardadas: 'Editar ventas ya guardadas',
+  eliminarDirecto: 'Eliminar ventas sin solicitud',
+  verPreciosCosto: 'Ver precios de costo',
+  cambiarPrecioVenta: 'Cambiar precio en venta',
+  aplicarDescuentos: 'Aplicar descuentos',
+  verSaldosTodos: 'Ver saldos de todos los clientes',
+  aumentarCreditoDirecto: 'Aumentar crédito directamente',
+  verInformesFinanzas: 'Ver informes de finanzas',
+};
+const ADMIN_EMAIL = 'anakeldistribuidora@outlook.com';
+
+function getUserPermisos(){
+  const email=STATE.user?.email||'';
+  if(email===ADMIN_EMAIL) return PERMISOS_DEFAULT_ADMIN;
+  try{
+    const saved=JSON.parse(localStorage.getItem('anakel_permisos_'+email)||'{}');
+    return {...PERMISOS_DEFAULT_CHOFER,...saved};
+  }catch{ return PERMISOS_DEFAULT_CHOFER; }
+}
+
+function puedo(permiso){
+  const p=getUserPermisos();
+  return p[permiso]===true;
+}
+
+function mostrarMenuPermisos(){
+  if(STATE.user?.email!==ADMIN_EMAIL){ showToast('Solo el administrador puede ver esto'); return; }
+  // Load all known users from solicitudes/ventas
+  const usuarios=[...new Set([
+    ...STATE.ventas.map(v=>v.creadoPor),
+    ...STATE.pagos.map(p=>p.creadoPor),
+  ].filter(e=>e&&e!==ADMIN_EMAIL))];
+
+  const html=`<div class="sheet-title">⚙️ Permisos de usuarios</div><div class="sheet-body">
+    ${!usuarios.length?'<div style="padding:20px 16px;color:var(--text2);font-size:13px">Sin otros usuarios registrados aún. Los permisos aparecerán aquí cuando el chofer use la app.</div>':
+    usuarios.map(email=>{
+      const saved=JSON.parse(localStorage.getItem('anakel_permisos_'+email)||'{}');
+      const actual={...PERMISOS_DEFAULT_CHOFER,...saved};
+      return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px">👤 ${esc(email)}</div>
+        ${Object.entries(PERMISOS_LABELS).map(([key,label])=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:13px">${label}</div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px">
+              <input type="checkbox" ${actual[key]?'checked':''} onchange="togglePermiso('${email}','${key}',this.checked)" style="opacity:0;width:0;height:0">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${actual[key]?'var(--green)':'var(--border)'};border-radius:24px;transition:.3s">
+                <span style="position:absolute;height:18px;width:18px;left:${actual[key]?'23px':'3px'};bottom:3px;background:white;border-radius:50%;transition:.3s"></span>
+              </span>
+            </label>
+          </div>`).join('')}
+      </div>`;
+    }).join('')}
+    <div style="padding:16px"><button class="btn btn-full" onclick="closeSheet()">Cerrar</button></div>
+  </div>`;
+  openSheet(html);
+}
+
+function togglePermiso(email, key, value){
+  try{
+    const saved=JSON.parse(localStorage.getItem('anakel_permisos_'+email)||'{}');
+    saved[key]=value;
+    localStorage.setItem('anakel_permisos_'+email, JSON.stringify(saved));
+    // Also save to Firebase so it persists across devices
+    if(_db&&_fbFs){
+      const {collection,doc,setDoc}=_fbFs;
+      setDoc(doc(collection(_db,'permisos'),email),{...PERMISOS_DEFAULT_CHOFER,...saved,email,updatedAt:new Date().toISOString()},{merge:true}).catch(()=>{});
+    }
+  }catch(e){ showToast('Error guardando permisos'); }
+}
+
+// Load permisos from Firebase on login
+async function loadPermisosFromFirebase(){
+  if(!_db||!_fbFs||!STATE.user) return;
+  try{
+    const email=STATE.user.email;
+    if(email===ADMIN_EMAIL) return;
+    const {collection,doc,getDoc}=_fbFs;
+    const snap=await getDoc(doc(collection(_db,'permisos'),email));
+    if(snap.exists()){
+      localStorage.setItem('anakel_permisos_'+email, JSON.stringify(snap.data()));
+    }
+  }catch(e){}
+}
+
 function aplicarLimiteCreditoDefault(){
   // Default credit limit: 600 for all. If saldo > 600, limit = saldo * 1.10 rounded to hundreds
   let changed=false;
@@ -1860,6 +2087,25 @@ window.addEventListener('popstate', e=>{
   if(sheetStack.length>0){ closeSheet(); history.pushState(null,'',location.href); }
 });
 history.pushState(null,'',location.href);
+
+// ─── DARK MODE ───────────────────────────────────────────────
+function initDarkMode(){
+  const dark = localStorage.getItem('anakel_dark')==='1';
+  if(dark) document.documentElement.classList.add('dark');
+  updateDarkIcons(dark);
+}
+function toggleDarkMode(){
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('anakel_dark', isDark?'1':'0');
+  updateDarkIcons(isDark);
+}
+function updateDarkIcons(isDark){
+  const sol = document.getElementById('icon-sol');
+  const luna = document.getElementById('icon-luna');
+  if(sol) sol.style.display = isDark ? 'none' : '';
+  if(luna) luna.style.display = isDark ? '' : 'none';
+}
+initDarkMode();
 initFirebase().catch(e=>console.warn('Firebase init error:',e));
 // Register service worker for PWA/offline support
 if('serviceWorker' in navigator){
