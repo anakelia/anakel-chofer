@@ -1270,19 +1270,23 @@ function renderClientes(){
     _rutaNombre: c.rutaNombre||getRutaNombre(c.ruta)||'Sin ruta'
   }));
   if(q) clis=clis.filter(c=>c.nombre?.toLowerCase().includes(q)||c._rutaNombre?.toLowerCase().includes(q));
-  // Sort by ruta name then by client name
+  // Sort by ruta name then by client name — ensures grouping works correctly
   clis.sort((a,b)=>{
-    const ra=a._rutaNombre||'Sin ruta', rb=b._rutaNombre||'Sin ruta';
-    if(ra!==rb) return ra.localeCompare(rb,'es');
-    return (a.nombre||'').localeCompare(b.nombre||'','es');
+    const ra=a._rutaNombre||'zzz', rb=b._rutaNombre||'zzz';
+    if(ra!==rb) return ra.localeCompare(rb,'es',{sensitivity:'base'});
+    return (a.nombre||'').localeCompare(b.nombre||'','es',{sensitivity:'base'});
   });
-  clis=clis.slice(0,100);
+  clis=clis.slice(0,200); // increase limit
   if(!clis.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados para "'+esc(q)+'"':'Sin clientes'}</div>`; return; }
-  const lastRuta={};
+  // Group by ruta — after sorting, same rutas are consecutive
   let html='';
+  let lastRuta=null;
   clis.forEach(c=>{
     const ruta=c._rutaNombre||'Sin ruta';
-    if(!lastRuta[ruta]){ html+=`<div class="section-label">${esc(ruta)}</div>`; lastRuta[ruta]=true; }
+    if(ruta!==lastRuta){
+      html+=`<div class="section-label">${esc(ruta)}</div>`;
+      lastRuta=ruta;
+    }
     const ventasPend=STATE.ventas.filter(v=>String(v.clienteId)===String(c.id)&&v.estado!=='recibido').length;
     const totalVentas=STATE.ventas.filter(v=>String(v.clienteId)===String(c.id)).length;
     const creditoDisp=(c.limiteCredito||0)-(c.saldo||0);
