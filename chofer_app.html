@@ -33,63 +33,6 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
   }
-  .dark {
-    --bg: #0d0d0f;
-    --bg2: #1a1a1f;
-    --surface: #1c1c22;
-    --border: #2d2d35;
-    --text: #f0f0f5;
-    --text2: #9999a8;
-    --text3: #55555f;
-    --accent: #4a6fa5;
-    --accent2: #3a5a90;
-    --green: #2fb573;
-    --green-bg: #0d2b1a;
-    --red: #e05252;
-    --red-bg: #2b0d0d;
-    --amber: #d4a035;
-    --amber-bg: #2b2000;
-    --blue: #4a7ab5;
-    --blue-bg: #0d1a2b;
-    --shadow: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
-  }
-  .dark #topbar { background: #16161c; border-bottom-color: var(--border); }
-  .dark #topbar button svg { stroke: #c0c0cc; }
-  .dark #topbar button { color: #c0c0cc; }
-  .dark .sync-dot { background: #2fb573; }
-  .dark .sync-dot.offline { background: #d4a035; }
-  .dark .sync-dot.syncing { background: #4a7ab5; }
-  .dark #bottomnav { background: #16161c; border-top-color: var(--border); }
-  .dark #login-screen { background: #0d0d12; }
-  .dark .login-field { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
-  .dark .total-bar { background: #111116; }
-  .dark .saldo-bar { background: #222228; }
-  .dark .articles-bar { background: #222228; }
-  .dark .client-bar { background: #2a3a5a; }
-  .dark .offline-banner { background: #6b4800; }
-  .dark #sync-bar { background: #16161c; }
-  .dark .search-input { background: var(--bg2); color: var(--text); }
-  .dark .month-nav-btn { background: var(--bg2); border-color: var(--border); color: var(--text); }
-  .dark .filter-tab { color: var(--text2); }
-  .dark .filter-tab.active { color: var(--accent); }
-  .dark .btn { background: var(--bg2); border-color: var(--border); color: var(--text); }
-  .dark .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-  .dark .btn-green { background: var(--green); color: white; }
-  .dark .btn-red { background: var(--red); color: white; }
-  .dark .pago-method { background: var(--bg2); border-color: var(--border); color: var(--text); }
-  .dark .pago-method.selected { border-color: var(--accent); background: var(--blue-bg); }
-  .dark .qty-btn { background: var(--bg2); border-color: var(--border); color: var(--text); }
-  .dark .list-item { background: var(--surface); }
-  .dark .list-item:active { background: var(--bg2); }
-  .dark .doc-item { background: var(--surface); }
-  .dark .doc-item:active { background: var(--bg2); }
-  .dark .sheet { background: var(--surface); }
-  .dark .form-input { background: var(--bg2); border-color: var(--border); color: var(--text); }
-  .dark .section-label { color: var(--text2); }
-  .dark .month-nav { background: var(--surface); border-bottom-color: var(--border); }
-  .dark .month-nav-label { color: var(--text); }
-  .dark .month-total { color: var(--text2); }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
 
@@ -307,7 +250,7 @@
 <body>
 
 <!-- LOGIN -->
-<div id="login-screen" style="display:none">
+<div id="login-screen">
   <div class="login-logo">🛵</div>
   <div class="login-title">Anakel</div>
   <div class="login-sub">Sistema de distribución</div>
@@ -319,8 +262,6 @@
 
 <!-- MAIN APP -->
 <div id="app" style="display:none">
-  <!-- Last sync bar -->
-  <div id="sync-bar" style="background:var(--bg2);padding:3px 16px;font-size:10px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">Sin sincronizar</div>
   <!-- Offline banner -->
   <div id="offline-banner" class="offline-banner hidden">📵 Sin conexión — los cambios se sincronizarán cuando haya internet</div>
 
@@ -332,17 +273,6 @@
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="sync-indicator" class="sync-dot"></span>
-      <button onclick="mostrarMenuPermisos()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2)" title="Permisos" id="btn-permisos">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.41 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-      </button>
-      <button onclick="toggleDarkMode()" id="btn-darkmode" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text2)" title="Modo oscuro">
-        <svg id="icon-sol" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg id="icon-luna" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
-      <button onclick="mostrarNotificacionesChofer()" style="background:none;border:none;cursor:pointer;padding:4px;position:relative" title="Notificaciones">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        <span id="chofer-notif-badge" style="display:none;position:absolute;top:-3px;right:-3px;background:#c0392b;color:white;border-radius:10px;font-size:9px;min-width:15px;height:15px;align-items:center;justify-content:center;padding:0 3px;font-weight:700"></span>
-      </button>
       <button onclick="doSync()" style="background:none;border:none;cursor:pointer;padding:4px" title="Sincronizar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
       </button>
@@ -356,18 +286,18 @@
   <div id="content">
     <!-- VENTAS PAGE -->
     <div id="page-ventas" class="page active">
-
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setVentasFilter('todas',this)">Todas</button>
+        <button class="filter-tab" onclick="setVentasFilter('pendiente',this)">No recibido</button>
+        <button class="filter-tab" onclick="setVentasFilter('recibido',this)">Recibido</button>
+      </div>
       <div class="month-nav">
-        <button class="month-nav-btn" onclick="changePeriod(-1)">&#8249;</button>
+        <button class="month-nav-btn" onclick="changeMonth(-1)">&#8249;</button>
         <div>
-          <button onclick="abrirSelectorPeriodo('ventas')" class="btn btn-sm" style="font-size:12px;padding:4px 10px" id="ventas-period-tipo-btn">Mensual</button>
-          <div class="month-nav-label" id="month-label" style="font-size:13px">abr 2026</div>
+          <div class="month-nav-label" id="month-label">abr 2026</div>
         </div>
         <div class="month-total" id="month-total">MXN 0.00</div>
-        <button class="month-nav-btn" onclick="changePeriod(1)">&#8250;</button>
-      </div>
-      <div class="search-wrap">
-        <input class="search-input" id="ventas-search" placeholder="Buscar por cliente o número..." oninput="renderVentas()">
+        <button class="month-nav-btn" onclick="changeMonth(1)">&#8250;</button>
       </div>
       <div id="ventas-list" style="background:var(--surface)"></div>
       <div style="height:80px"></div>
@@ -376,19 +306,8 @@
 
     <!-- PAGOS PAGE -->
     <div id="page-pagos" class="page">
-      <div class="filter-tabs">
-        <button class="filter-tab active" onclick="setPagosFilter('todas',this)">Todos</button>
-        <button class="filter-tab" onclick="setPagosFilter('efectivo',this)">Efectivo</button>
-        <button class="filter-tab" onclick="setPagosFilter('banco',this)">Banco</button>
-      </div>
-      <div class="month-nav">
-        <button class="month-nav-btn" onclick="changePeriodPagos(-1)">&#8249;</button>
-        <div>
-          <button onclick="abrirSelectorPeriodo('pagos')" class="btn btn-sm" style="font-size:12px;padding:4px 10px" id="pagos-period-tipo-btn">Mensual</button>
-          <div class="month-nav-label" id="pagos-period-label" style="font-size:13px">abr 2026</div>
-        </div>
-        <div class="month-total" id="pagos-total">MXN 0.00</div>
-        <button class="month-nav-btn" onclick="changePeriodPagos(1)">&#8250;</button>
+      <div class="page-header">
+        <div class="page-title">Pagos</div>
       </div>
       <div id="pagos-list" style="background:var(--surface)"></div>
       <div style="height:80px"></div>
@@ -397,11 +316,9 @@
 
     <!-- CLIENTES PAGE -->
     <div id="page-clientes" class="page">
-      <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
-        <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()" style="flex:1">
-        <button onclick="abrirFiltroRutas()" id="btn-filtro-rutas" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Ruta ▾</button>
+      <div class="search-wrap">
+        <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()">
       </div>
-      <div id="cli-filtro-activo" style="display:none;padding:6px 16px;background:var(--amber-bg);font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)"></div>
       <div id="clientes-list" style="background:var(--surface)"></div>
     </div>
 
@@ -422,32 +339,9 @@
         <button class="filter-tab active" onclick="setNCTab('devolucion',this)">NC Devolución</button>
         <button class="filter-tab" onclick="setNCTab('merma',this)">NC Merma</button>
       </div>
-      <div class="search-wrap">
-        <input class="search-input" id="nc-search" placeholder="Buscar por cliente o número..." oninput="renderNC()">
-      </div>
       <div id="nc-list" style="background:var(--surface)"></div>
       <div style="height:80px"></div>
       <button class="fab" onclick="nuevaNC()">+</button>
-    </div>
-
-    <!-- PRODUCTOS PAGE -->
-    <div id="page-productos" class="page">
-      <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
-        <input class="search-input" id="prod-inv-search" placeholder="Buscar producto..." oninput="renderProductos()" style="flex:1">
-        <button onclick="abrirFiltroCategorias()" id="btn-filtro-cats" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Cat. ▾</button>
-      </div>
-      <div id="prod-filtro-activo" style="display:none;padding:6px 16px;background:var(--blue-bg);font-size:12px;color:var(--blue);border-bottom:1px solid var(--border)"></div>
-      <div id="productos-list"></div>
-    </div>
-
-    <!-- NOTAS PAGE -->
-    <div id="page-notas" class="page">
-      <div class="search-wrap">
-        <input class="search-input" id="notas-search" placeholder="Buscar por cliente..." oninput="renderNotasPage()">
-      </div>
-      <div id="notas-list"></div>
-      <div style="height:80px"></div>
-      <button class="fab" onclick="nuevaNotaDirecta()">+</button>
     </div>
 
     <!-- GASTOS PAGE -->
@@ -483,14 +377,6 @@
     <button class="nav-btn" onclick="navTo('nc',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       NC
-    </button>
-    <button class="nav-btn" onclick="navTo('productos',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-      Inventario
-    </button>
-    <button class="nav-btn" onclick="navTo('notas',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      Notas
     </button>
     <button class="nav-btn" onclick="navTo('gastos',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -531,37 +417,16 @@ async function initFirebase(){
   _fbFs = { collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch };
 
   // Auth state listener
-  // Offline-first: if we have cached data and a known user, show app immediately
-  const cachedUser = localStorage.getItem('anakel_cached_user');
-  const hasCachedData = localStorage.getItem('cache_clientes');
-  if(cachedUser && hasCachedData){
-    // Show app immediately with cached data while Firebase confirms session
-    STATE.user = { email: cachedUser };
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('topbar-sub').textContent = cachedUser;
-    loadCachedData();
-  }
-
   onAuthStateChanged(_auth, user => {
     if(user){
       STATE.user = user;
-      localStorage.setItem('anakel_cached_user', user.email);
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       document.getElementById('topbar-sub').textContent = user.email;
-      loadAllData().then(()=>{
-        verificarPedidosDelDia();
-        setupChoferRealtimeListeners();
-        loadPermisosFromFirebase();
-        _lastSyncTime=new Date(); updateSyncBar();
-        // Show permisos button only for admin
-        const pb=document.getElementById("btn-permisos"); if(pb) pb.style.display=user.email===ADMIN_EMAIL?"":"none";
-      });
+      loadAllData();
       processQueue();
     } else {
       STATE.user = null;
-      localStorage.removeItem('anakel_cached_user');
       document.getElementById('login-screen').style.display = 'flex';
       document.getElementById('app').style.display = 'none';
     }
@@ -584,8 +449,6 @@ const STATE = {
   productos: [],
   notas: [],
   gastos: [],
-  rutas: [],
-  inventarioCarro: [],
   currentVenta: null,
 };
 
@@ -645,17 +508,7 @@ function doLogout(){
   import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({signOut})=>signOut(_auth));
 }
 
-async function doSync(){
-  showToast('Sincronizando...');
-  try{
-    await processQueue();
-    await loadAllData();
-    _lastSyncTime=new Date(); updateSyncBar();
-    showToast('✓ Sincronización exitosa');
-  }catch(e){
-    showToast('✗ Error al sincronizar — sin internet');
-  }
-}
+function doSync(){ processQueue().then(loadAllData); showToast('Sincronizando...'); }
 
 // ─── Data loading ────────────────────────────────────────────
 async function loadAllData(){
@@ -676,27 +529,9 @@ async function loadAllData(){
     STATE.productos = productosSnap.docs.map(d=>({id:d.id,...d.data()}));
     STATE.notas = notasSnap.docs.map(d=>({id:d.id,...d.data()}));
     STATE.gastos = gastosSnap.docs.map(d=>({id:d.id,...d.data()}));
-    // Also load rutas for client name display
-    try{ const rutasSnap=await getDocs(collection(_db,'rutas')); STATE.rutas=rutasSnap.docs.map(d=>({id:d.id,...d.data()})); }catch{}
-    // Load inventario from active route (set by ERP)
-    try{
-      const cached=localStorage.getItem('anakel_inventario_carro');
-      if(cached) STATE.inventarioCarro=JSON.parse(cached);
-      // Also try from Firebase active routes
-      const rutasActivasSnap=await getDocs(collection(_db,'rutasActivas'));
-      const rutaActiva=rutasActivasSnap.docs.find(d=>{const r=d.data();return r.chofer&&STATE.user?.email&&r.email===STATE.user.email;});
-      if(rutaActiva){
-        const inv=rutaActiva.data()?.inventario||[];
-        STATE.inventarioCarro=inv;
-        localStorage.setItem('anakel_inventario_carro',JSON.stringify(inv));
-      }
-    }catch{}
-    // Apply default credit limit logic
-    aplicarLimiteCreditoDefault();
     cacheData();
     renderCurrentPage();
     updateSyncBadge();
-    _lastSyncTime=new Date(); updateSyncBar();
   }catch(e){
     loadCachedData();
   }
@@ -741,8 +576,6 @@ function renderCurrentPage(){
   else if(p==='cotizar') renderCotizar();
   else if(p==='nc') renderNC();
   else if(p==='gastos') renderGastos();
-  else if(p==='productos') renderProductos();
-  else if(p==='notas') renderNotasPage();
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -777,20 +610,15 @@ function changeMonth(dir){
   renderVentas();
 }
 
-function setVentasFilter(f,btn){ _ventasFilter=f; document.querySelectorAll('#page-ventas .filter-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderVentas(); }
 function renderVentas(){
-  const label=document.getElementById('month-label');
-  if(label) label.textContent=periodLabel(_ventasPeriod);
-  const tipoBtn=document.getElementById('ventas-period-tipo-btn');
-  if(tipoBtn) tipoBtn.textContent=periodTipoLabel(_ventasPeriod.tipo);
-  const ventasQ=(document.getElementById('ventas-search')?.value||'').toLowerCase().trim();
-  let ventas=STATE.ventas.filter(v=>v.tipo==='venta'&&inPeriod(v.fecha,_ventasPeriod));
-  if(_ventasFilter==='pendiente') ventas=ventas.filter(v=>v.estado!=='recibido');
-  else if(_ventasFilter==='recibido') ventas=ventas.filter(v=>v.estado==='recibido');
-  if(ventasQ) ventas=ventas.filter(v=>(v.clienteNombre||'').toLowerCase().includes(ventasQ)||(v.numero||'').toLowerCase().includes(ventasQ));
-  const total=ventas.reduce((s,v)=>s+(v.total||0),0);
-  const totalEl=document.getElementById('month-total');
-  if(totalEl) totalEl.textContent='MXN '+fmt(total);
+  const label = document.getElementById('month-label');
+  if(label) label.textContent = getMonthStr(STATE.currentMonth);
+  let ventas = STATE.ventas.filter(v=>v.tipo==='venta'&&inMonth(v.fecha, STATE.currentMonth));
+  if(STATE.ventasFilter==='pendiente') ventas = ventas.filter(v=>v.estado!=='recibido');
+  else if(STATE.ventasFilter==='recibido') ventas = ventas.filter(v=>v.estado==='recibido');
+  const total = ventas.reduce((s,v)=>s+(v.total||0),0);
+  const totalEl = document.getElementById('month-total');
+  if(totalEl) totalEl.textContent = 'MXN '+fmt(total);
   const list = document.getElementById('ventas-list');
   if(!list) return;
   if(!ventas.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin ventas este mes</div>'; return; }
@@ -824,10 +652,6 @@ function nuevaVenta(){
   abrirFormVenta();
 }
 
-function abrirVentaPorNumero(num){
-  const v=STATE.ventas.find(x=>x.numero===num); if(!v){ showToast('Venta no encontrada'); return; }
-  abrirVenta(v.id);
-}
 function abrirVenta(id){
   const v = STATE.ventas.find(x=>x.id===id);
   if(!v) return;
@@ -881,21 +705,15 @@ function abrirFormVenta(){
   let itemsHTML = '';
   (v.items||[]).forEach((item,i)=>{
     const taxInfo = calcTax(item);
-    itemsHTML+=`<div class="article-row" style="flex-wrap:wrap">
-      <div class="article-info" style="flex:1;min-width:150px">
+    itemsHTML+=`<div class="article-row">
+      <div class="article-info">
         <div class="article-name">${esc(item.nombre)}</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
-          <button onclick="editItemQty(${i},-1)" class="qty-btn" style="width:26px;height:26px;font-size:14px">−</button>
-          <input type="number" value="${item.cantidad}" min="0.01" step="0.01" style="width:55px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px;font-size:14px;font-weight:600" onchange="editItemCant(${i},this.value)" onclick="this.select()">
-          <button onclick="editItemQty(${i},1)" class="qty-btn" style="width:26px;height:26px;font-size:14px">+</button>
-          <span style="font-size:12px;color:var(--text2)">× MXN</span>
-          <input type="number" value="${item.precio}" min="0" step="0.01" style="width:65px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px;font-size:13px" onchange="editItemPrecio(${i},this.value)" onclick="this.select()">
-        </div>
+        <div class="article-detail">${fmt(item.cantidad)} u. × MXN ${fmt(item.precio)}</div>
         ${taxInfo.html}
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-left:8px">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <div class="article-total">MXN ${fmt(item.total)}</div>
-        <button class="article-remove" onclick="removeItem(${i})" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;font-size:18px">✕</button>
+        <button class="article-remove" onclick="removeItem(${i})">✕</button>
       </div>
     </div>`;
   });
@@ -933,12 +751,15 @@ function abrirFormVenta(){
       </div>
     </div>
     <div class="divider"></div>
-
+    <div class="section-row" onclick="abrirDescuento()">
+      <svg class="section-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      <div class="section-row-label">Descuento</div>
+      <div class="section-row-value ${v.descuento>0?'text-red':''}">${v.descuento>0?`(-) MXN ${fmt(v.descuento)}`:'MXN 0.00'}</div>
+      <svg class="section-row-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
     <div class="section-row">
       <svg class="section-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      <div class="section-row-label" style="display:flex;align-items:center;gap:8px">Ajuste / Redondeo
-        <button onclick="event.stopPropagation();mostrarAyudaAjuste()" style="background:var(--bg2);border:1px solid var(--border);border-radius:50%;min-width:32px;min-height:32px;font-size:16px;cursor:pointer;color:var(--text2);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent">?</button>
-      </div>
+      <div class="section-row-label">Ajuste / Redondeo</div>
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="changeAjuste(-1)" class="qty-btn">−</button>
         <span class="fw-600">MXN ${fmt(v.ajuste||0)}</span>
@@ -948,47 +769,22 @@ function abrirFormVenta(){
     <div class="total-bar"><div class="total-bar-label">Total</div><div class="total-bar-amount">MXN ${fmt(totales.total)}</div></div>
     ${totales.taxLines.length?`<div style="background:#f9f9f9;padding:10px 16px;font-size:13px;color:var(--text2)">${totales.taxLines.map(t=>`<div style="display:flex;justify-content:space-between"><span>${t.label}</span><span>MXN ${fmt(t.monto)}</span></div>`).join('')}</div>`:''}
     <div class="divider"></div>
-    <div style="background:var(--surface);border-top:1px solid var(--border)">
-      <div class="section-row" style="cursor:default">
-        <svg class="section-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <div class="section-row-label">Pagos recibidos</div>
-        <div class="section-row-value">(-) MXN ${fmt(v.pagado||0)}</div>
-      </div>
-      ${(v.pagos||[]).map((p,i)=>`<div style="padding:6px 16px 6px 56px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span>${p.metodo==='banco'?'🏦 Banco':'💵 Efectivo'}${p.pendienteConfirmacion?' (pendiente)':''}</span>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span style="font-weight:600">MXN ${fmt(p.monto)}</span>
-          <button onclick="editPago(${i})" class="btn btn-sm" style="font-size:13px;padding:6px 12px;min-height:36px">Editar</button>
-          <button onclick="removePago(${i})" style="background:none;border:1px solid var(--red);border-radius:6px;color:var(--red);cursor:pointer;font-size:16px;width:36px;height:36px;display:flex;align-items:center;justify-content:center">✕</button>
-        </div>
-      </div>`).join('')}
-      <div style="padding:10px 16px">
-        <button class="btn btn-full" onclick="abrirPagoVenta()" style="border-style:dashed">+ Agregar pago</button>
-      </div>
+    <div class="section-row" onclick="abrirPagoVenta()">
+      <svg class="section-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <div class="section-row-label">Pago</div>
+      <div class="section-row-value">(-) MXN ${fmt(v.pagado||0)} ∨</div>
     </div>
     ${ncPendiente>0?`<div class="section-row"><input type="checkbox" id="chk-nc" style="width:20px;height:20px"><div><div style="font-size:14px;font-weight:500">Este cliente tiene nota de crédito</div><div class="fs-12 color-2">Disponible: MXN ${fmt(ncPendiente)}</div></div><div class="section-row-value">(-) MXN 0.00</div></div>`:''}
     <div class="saldo-bar"><div>Saldo de factura</div><div>MXN ${fmt(saldoFactura)}</div></div>
     <div class="divider"></div>
     <div style="padding:12px 16px">
-      <div class="form-label">Nota para el cliente (el cliente SÍ puede verla)</div>
+      <div class="form-label">Nota (aparece en PDF)</div>
       <textarea class="form-input" rows="2" style="resize:none" onchange="STATE.currentVenta.nota=this.value">${esc(v.nota||'')}</textarea>
     </div>
     <div style="padding:0 16px 12px">
-      <div class="form-label">Nota interna (el cliente NO puede verla)</div>
+      <div class="form-label">Nota interna (no aparece en PDF)</div>
       <textarea class="form-input" rows="2" style="resize:none" onchange="STATE.currentVenta.notaInterna=this.value">${esc(v.notaInterna||'')}</textarea>
     </div>
-    <div style="padding:0 16px 12px">
-      <div class="form-label">📦 Nota para próxima entrega <span style="font-size:10px;color:var(--text2)">(aparecerá al crear la siguiente venta a este cliente)</span></div>
-      <textarea class="form-input" rows="2" style="resize:none" id="venta-nota-proxima" placeholder="Ej: Traer factura, cambiar sabor, cliente pide más cantidad...">${esc(v.notaProxima||'')}</textarea>
-    </div>
-    <div style="padding:0 16px 12px;display:flex;gap:8px">
-      <button class="btn btn-full" onclick="abrirMermaEnVenta()" style="color:var(--amber);border-color:var(--amber)">+ Agregar merma</button>
-      <button class="btn btn-full" onclick="abrirDevolucionEnVenta()" style="color:var(--red);border-color:var(--red)">↩ Agregar devolución</button>
-    </div>
-    ${(v.mermas||[]).length||((v.devoluciones||[]).length)?`<div style="padding:0 16px 12px;font-size:12px;color:var(--text2)">
-      ${(v.mermas||[]).map(m=>`<div>Merma: ${esc(m.nombre)} ×${m.cantidad} — ${esc(m.motivo)} (-MXN ${fmt(m.monto)})</div>`).join('')}
-      ${(v.devoluciones||[]).map(d=>`<div>Dev: ${esc(d.nombre)} ×${d.cantidad} — ${esc(d.motivo)} (-MXN ${fmt(d.monto)})</div>`).join('')}
-    </div>`:''}
     ${v.id?`<div style="padding:0 16px 16px"><button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="solicitarEliminar('${v.id}')">Solicitar eliminación</button></div>`:''}
     <div class="action-bar">
       <button class="btn" onclick="closeSheet()">Cancelar</button>
@@ -999,70 +795,6 @@ function abrirFormVenta(){
 }
 
 function removeItem(idx){ STATE.currentVenta.items.splice(idx,1); abrirFormVenta(); }
-function editItemQty(idx,dir){
-  const item=STATE.currentVenta.items[idx]; if(!item) return;
-  const newQty=Math.max(0.01,(item.cantidad||1)+dir);
-  // Check stock if increasing
-  if(dir>0){
-    const inventario=STATE.inventarioCarro||[];
-    const inv=inventario.find(x=>String(x.id)===String(item.productoId)||String(x.productoId)===String(item.productoId));
-    if(inv){
-      const otrasEnVenta=(STATE.currentVenta?.items||[]).filter((it,i)=>i!==idx&&String(it.productoId)===String(item.productoId)).reduce((s,i)=>s+(i.cantidad||0),0);
-      const maxDisp=Math.max(0,(inv.cantidad||0)-otrasEnVenta);
-      if(newQty>maxDisp){ showToast('Máximo disponible: '+maxDisp+' unidades'); return; }
-    }
-  }
-  STATE.currentVenta.items[idx]={...item,cantidad:newQty,total:newQty*(item.precio||0)};
-  abrirFormVenta();
-}
-function editItemCant(idx,val){
-  const item=STATE.currentVenta.items[idx]; if(!item) return;
-  const qty=parseFloat(val)||0;
-  STATE.currentVenta.items[idx]={...item,cantidad:qty,total:qty*(item.precio||0)};
-  // Don't re-render (user is typing) — just update total display
-}
-function editItemPrecio(idx,val){
-  const item=STATE.currentVenta.items[idx]; if(!item) return;
-  const precio=parseFloat(val)||0;
-  STATE.currentVenta.items[idx]={...item,precio,total:(item.cantidad||1)*precio};
-}
-function removePago(idx){
-  const pagos=STATE.currentVenta.pagos||[];
-  const pago=pagos[idx];
-  STATE.currentVenta.pagado=Math.max(0,(STATE.currentVenta.pagado||0)-(pago?.monto||0));
-  STATE.currentVenta.pagos.splice(idx,1);
-  abrirFormVenta();
-}
-function editPago(idx){
-  const pago=STATE.currentVenta.pagos?.[idx]; if(!pago) return;
-  const html=`<div class="sheet-title">Editar pago</div><div class="sheet-body">
-    <div class="form-group"><div class="form-label">Método</div>
-      <div class="pago-methods">
-        <div class="pago-method ${pago.metodo==='banco'?'':'selected'}" id="ep-met-efectivo" onclick="selectEpMet('efectivo')"><div class="pago-method-icon">💵</div><div class="pago-method-label">Efectivo</div></div>
-        <div class="pago-method ${pago.metodo==='banco'?'selected':''}" id="ep-met-banco" onclick="selectEpMet('banco')"><div class="pago-method-icon">🏦</div><div class="pago-method-label">Banco</div></div>
-      </div></div>
-    <div class="form-group"><div class="form-label">Monto (MXN)</div>
-      <input type="number" id="ep-monto" class="form-input" value="${pago.monto}" step="0.01" style="font-size:22px;font-weight:700;text-align:right"></div>
-    <div class="action-bar">
-      <button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarEditPago(${idx})">Guardar</button>
-    </div>
-  </div>`;
-  openSheet(html,true);
-}
-function selectEpMet(m){
-  document.querySelectorAll('#overlay .pago-method').forEach(el=>el.classList.remove('selected'));
-  document.getElementById('ep-met-'+m)?.classList.add('selected');
-}
-function guardarEditPago(idx){
-  const monto=parseFloat(document.getElementById('ep-monto')?.value)||0;
-  const isBanco=document.getElementById('ep-met-banco')?.classList.contains('selected');
-  const pago=STATE.currentVenta.pagos?.[idx]; if(!pago) return;
-  const diff=monto-(pago.monto||0);
-  STATE.currentVenta.pagado=(STATE.currentVenta.pagado||0)+diff;
-  STATE.currentVenta.pagos[idx]={...pago,monto,metodo:isBanco?'banco':'efectivo'};
-  closeSheet(); setTimeout(abrirFormVenta,100);
-}
 function changeAjuste(dir){ STATE.currentVenta.ajuste=(STATE.currentVenta.ajuste||0)+dir; abrirFormVenta(); }
 
 function abrirBuscadorProductos(){
@@ -1075,12 +807,7 @@ function filterProds(q){
   const res = document.getElementById('prod-results'); if(!res) return;
   const prods = STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo'&&(!q||p.nombre?.toLowerCase().includes(q.toLowerCase())||p.sku?.toLowerCase().includes(q.toLowerCase()))).slice(0,20);
   if(!prods.length){ res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Sin resultados</div>'; return; }
-  res.innerHTML=prods.map(p=>{
-    const stock=getStockDisponible(p.id);
-    const stockBadge=stock===null?'':(stock<=0?'<span class="badge badge-red">Sin stock</span>':(stock<=3?`<span class="badge badge-amber">${stock} disp.</span>`:`<span class="badge badge-green">${stock} disp.</span>`));
-    const disabled=stock!==null&&stock<=0?' style="opacity:0.5;pointer-events:none"':'';
-    return `<div class="prod-result-item" onclick="seleccionarProducto('${p.id}')"${disabled}><div style="display:flex;justify-content:space-between;align-items:center"><div class="prod-result-name">${esc(p.nombre||p.sku)}</div>${stockBadge}</div><div class="prod-result-price">MXN ${fmt(p.precio||0)} / ${p.unidad||'pza'}</div></div>`;
-  }).join('');
+  res.innerHTML=prods.map(p=>`<div class="prod-result-item" onclick="seleccionarProducto('${p.id}')"><div class="prod-result-name">${esc(p.nombre||p.sku)}</div><div class="prod-result-price">MXN ${fmt(p.precio||0)} / ${p.unidad||'pza'}</div></div>`).join('');
 }
 
 function seleccionarProducto(prodId){
@@ -1102,39 +829,10 @@ function seleccionarProducto(prodId){
 
 function adjQty(d){ const inp=document.getElementById('prod-qty'); if(inp) inp.value=Math.max(0.01,(parseFloat(inp.value)||0)+d); }
 
-function getStockDisponible(prodId){
-  // Get stock from inventario carro (set by ERP when route starts)
-  // Falls back to unlimited if no inventory data
-  const inventario = STATE.inventarioCarro||[];
-  const item = inventario.find(x=>String(x.id)===String(prodId)||String(x.productoId)===String(prodId));
-  if(!item) return null; // null = no inventory control
-  // Subtract what's already in the current venta
-  const yaEnVenta = (STATE.currentVenta?.items||[])
-    .filter(i=>String(i.productoId)===String(prodId))
-    .reduce((s,i)=>s+(i.cantidad||0),0);
-  return Math.max(0,(item.cantidad||0)-yaEnVenta);
-}
-
 function addProducto(prodId){
   const p=STATE.productos.find(x=>String(x.id)===String(prodId)); if(!p) return;
-  let qty=parseFloat(document.getElementById('prod-qty')?.value)||1;
+  const qty=parseFloat(document.getElementById('prod-qty')?.value)||1;
   const price=parseFloat(document.getElementById('prod-price')?.value)||p.precio||0;
-  
-  // Check available stock
-  const stock = getStockDisponible(prodId);
-  if(stock!==null){
-    if(stock<=0){
-      showToast('Sin stock disponible de '+p.nombre+' en el carro');
-      closeSheet();
-      setTimeout(abrirFormVenta,100);
-      return;
-    }
-    if(qty>stock){
-      showToast('Solo hay '+stock+' unidades de '+p.nombre+'. Se ajustó la cantidad.');
-      qty=stock;
-    }
-  }
-  
   const total=qty*price;
   STATE.currentVenta.items.push({productoId:p.id,nombre:p.nombre||p.sku,sku:p.sku,cantidad:qty,precio:price,iva:p.iva,ieps:p.ieps,total});
   closeSheet();
@@ -1159,14 +857,7 @@ function setCli(id){
   STATE.currentVenta.clienteId=c.id;
   STATE.currentVenta.clienteNombre=c.nombre;
   closeSheet();
-  setTimeout(()=>{
-    abrirFormVenta();
-    // Check for alerts and delivery notes after form opens
-    setTimeout(()=>{
-      verificarAlertaCliente(c.id,c.nombre);
-      verificarNotasProximaEntrega(c.id,c.nombre);
-    },300);
-  },100);
+  setTimeout(abrirFormVenta,100);
 }
 
 function abrirDescuento(){
@@ -1236,17 +927,6 @@ async function guardarVentaActual(){
 async function guardarVenta(){
   if(!STATE.currentVenta.clienteNombre){ showToast('Selecciona un cliente'); return; }
   if(!STATE.currentVenta.items?.length){ showToast('Agrega al menos un producto'); return; }
-  // Save nota proxima entrega if filled
-  const notaProxima=document.getElementById('venta-nota-proxima')?.value.trim();
-  if(notaProxima){
-    STATE.currentVenta.notaProxima=notaProxima;
-    // Save as nota for next delivery
-    const nota={id:'nota_'+Date.now(),clienteId:STATE.currentVenta.clienteId,clienteNombre:STATE.currentVenta.clienteNombre,texto:notaProxima,proximaEntrega:true,fecha:new Date().toLocaleDateString('es-MX'),creadoPor:STATE.user?.email,ts:Date.now(),mostrada:false};
-    const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
-    notas.push(nota);
-    localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
-    if(_db&&_fbFs){const{collection,addDoc}=_fbFs;addDoc(collection(_db,'notas_clientes'),nota).catch(()=>{});}
-  }
   await guardarVentaActual();
   closeSheet(); renderVentas(); showToast('Venta guardada ✓');
 }
@@ -1300,20 +980,10 @@ async function printTicket58(v){
 // ─── PAGOS ──────────────────────────────────────────────────
 function renderPagos(){
   const list=document.getElementById('pagos-list'); if(!list) return;
-  const plabel=document.getElementById('pagos-period-label');
-  if(plabel) plabel.textContent=periodLabel(_pagosPeriod);
-  const tipoBtn=document.getElementById('pagos-period-tipo-btn');
-  if(tipoBtn) tipoBtn.textContent=periodTipoLabel(_pagosPeriod.tipo);
-  let pagos=STATE.pagos.filter(p=>inPeriod(p.fecha,_pagosPeriod));
-  if(_pagosFilter==='efectivo') pagos=pagos.filter(p=>p.metodo==='efectivo');
-  else if(_pagosFilter==='banco') pagos=pagos.filter(p=>p.metodo==='banco');
-  const total=pagos.reduce((s,p)=>s+(p.monto||0),0);
-  const totalEl=document.getElementById('pagos-total');
-  if(totalEl) totalEl.textContent='MXN '+fmt(total);
-  if(!pagos.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin pagos en este período</div>'; return; }
-  list.innerHTML=pagos.map(p=>{
+  if(!STATE.pagos.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin pagos</div>'; return; }
+  list.innerHTML=STATE.pagos.slice(0,50).map(p=>{
     const d=fmtDateShort(p.fecha);
-    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div><button onclick="event.stopPropagation();imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-sm" style="margin-top:4px;font-size:11px">🖨</button></div></div>`;
+    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div></div></div>`;
   }).join('');
 }
 
@@ -1366,46 +1036,15 @@ async function guardarNuevoPago(){
 
 // ─── CLIENTES ────────────────────────────────────────────────
 function renderClientes(){
-  const q=(document.getElementById('cli-search')?.value||'').toLowerCase().trim();
+  const q=(document.getElementById('cli-search')?.value||'').toLowerCase();
   const list=document.getElementById('clientes-list'); if(!list) return;
-  const rutas=STATE.rutas||[];
-  const getRutaNombre=id=>{
-    if(!id) return 'Sin ruta';
-    const sid=String(id);
-    // Try exact match by id in rutas collection
-    let r=rutas.find(r=>String(r.id)===sid);
-    if(!r) r=rutas.find(r=>r.nombre===id||String(r.nombre)===sid);
-    if(r) return r.nombre||'Sin ruta';
-    // If it looks like a timestamp ID with no match, hide it
-    if(/^\d{10,}$/.test(sid)) return 'Sin ruta';
-    if(/^\d{1,3}$/.test(sid)) return 'Ruta '+sid;
-    return sid.length>20?'Sin ruta':sid;
-  };
-  let clis=STATE.clientes.filter(c=>c.activo!==false).map(c=>({
-    ...c,
-    // Use rutaNombre if already resolved by ERP, otherwise resolve locally
-    _rutaNombre: c.rutaNombre||getRutaNombre(c.ruta)||'Sin ruta'
-  }));
-  if(q) clis=clis.filter(c=>c.nombre?.toLowerCase().includes(q)||c._rutaNombre?.toLowerCase().includes(q));
-  // Apply route filter
-  if(_filtroRutasActivas.length>0) clis=clis.filter(c=>_filtroRutasActivas.includes(c._rutaNombre||'Sin ruta'));
-  // Sort by ruta name then by client name — ensures grouping works correctly
-  clis.sort((a,b)=>{
-    const ra=a._rutaNombre||'zzz', rb=b._rutaNombre||'zzz';
-    if(ra!==rb) return ra.localeCompare(rb,'es',{sensitivity:'base'});
-    return (a.nombre||'').localeCompare(b.nombre||'','es',{sensitivity:'base'});
-  });
-  clis=clis.slice(0,200); // increase limit
-  if(!clis.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados para "'+esc(q)+'"':'Sin clientes'}</div>`; return; }
-  // Group by ruta — after sorting, same rutas are consecutive
+  const clis=STATE.clientes.filter(c=>c.activo!==false&&(!q||c.nombre?.toLowerCase().includes(q)||c.ruta?.toLowerCase().includes(q))).slice(0,50);
+  if(!clis.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin clientes</div>'; return; }
+  const lastRuta={};
   let html='';
-  let lastRuta=null;
   clis.forEach(c=>{
-    const ruta=c._rutaNombre||'Sin ruta';
-    if(ruta!==lastRuta){
-      html+=`<div class="section-label">${esc(ruta)}</div>`;
-      lastRuta=ruta;
-    }
+    const ruta=c.ruta||'Sin ruta';
+    if(!lastRuta[ruta]){ html+=`<div class="section-label">${esc(ruta)}</div>`; lastRuta[ruta]=true; }
     const ventasPend=STATE.ventas.filter(v=>String(v.clienteId)===String(c.id)&&v.estado!=='recibido').length;
     const totalVentas=STATE.ventas.filter(v=>String(v.clienteId)===String(c.id)).length;
     const creditoDisp=(c.limiteCredito||0)-(c.saldo||0);
@@ -1443,8 +1082,7 @@ function abrirCliente(id){
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-sm btn-primary" onclick="nuevaVentaParaCliente('${c.id}')">+ Venta</button>
         <button class="btn btn-sm btn-green" onclick="nuevoPagoParaCliente('${c.id}')">+ Pago</button>
-        <button class="btn btn-sm" onclick="abrirNotasCliente('${c.id}','${esc(c.nombre)}')">📝 Notas</button>
-        <button class="btn btn-sm" onclick="solicitarAumentoCreditoCliente('${c.id}')">Solicitar crédito</button>
+        <button class="btn btn-sm" onclick="solicitarAumentoCreditoCliente('${c.id}')">Solicitar aumento crédito</button>
         <button class="btn btn-sm" onclick="compartirEstadoCuenta('${c.id}')">📤 WhatsApp</button>
       </div>
     </div>
@@ -1465,8 +1103,7 @@ function abrirCliente(id){
       <div style="padding:6px 16px;font-size:20px;font-weight:700;text-align:right;background:#2d2d2d;color:white">Saldo: MXN ${fmt(c.saldo||0)}</div>
     </div>
     <div style="display:flex;gap:8px;padding:16px;border-top:1px solid var(--border)">
-      <button class="btn" style="flex:1" onclick="imprimirEstadoCuenta('${c.id}','${esc(c.nombre)}')">🖨 Imprimir</button>
-      <button class="btn" style="flex:1" onclick="compartirEstadoCuenta('${c.id}')">📤 WhatsApp</button>
+      <button class="btn" style="flex:1" onclick="compartirEstadoCuenta('${c.id}')">Compartir</button>
       <button class="btn btn-primary" style="flex:1" onclick="closeSheet()">Cerrar</button>
     </div>`;
   openSheet(html);
@@ -1504,29 +1141,12 @@ function setCotizarTab(tab, btn){
   renderCotizar();
 }
 
-let _cotizarExpandido = false;
 function renderCotizar(){
   const list=document.getElementById('cotizar-list'); if(!list) return;
   const tipo=STATE.cotizarTab==='cotizaciones'?'cotizacion':'pedido';
   const docs=STATE.ventas.filter(v=>v.tipo===tipo).slice(0,30);
-  let extra='';
-  if(tipo==='pedido'){
-    extra=`<div style="display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
-      <button class="btn btn-sm" onclick="mostrarPedidosDelDia()">📦 Pedidos del día</button>
-      <button class="btn btn-sm" onclick="_cotizarExpandido=!_cotizarExpandido;renderCotizar()">${_cotizarExpandido?'Contraer todo':'Expandir todo'}</button>
-    </div>`;
-  }
-  if(!docs.length){ list.innerHTML=extra+'<div style="padding:40px;text-align:center;color:var(--text3)">Sin '+STATE.cotizarTab+'</div>'; return; }
-  list.innerHTML=extra+docs.map(d=>{
-    const dt=fmtDateShort(d.fecha);
-    const badge=`<span class="badge ${tipo==='cotizacion'?'badge-gray':'badge-blue'}">${tipo==='cotizacion'?'Cotización':'Pedido'}</span>`;
-    const itemsHTML=_cotizarExpandido&&d.items?.length?`<div style="padding:4px 0 0;font-size:11px;color:var(--text2)">${d.items.map(i=>`• ${esc(i.nombre)} × ${i.cantidad}`).join('<br>')}</div>`:'';
-    return `<div class="doc-item" onclick="abrirDocCotizar('${d.id}')">
-      <div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div>
-      <div class="doc-info"><div class="doc-num">${esc(d.numero||'')} ${badge}</div><div class="doc-client">${esc(d.clienteNombre||'')}</div>${itemsHTML}</div>
-      <div class="doc-right"><div class="doc-total">MXN ${fmt(d.total)}</div></div>
-    </div>`;
-  }).join('');
+  if(!docs.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">Sin ${STATE.cotizarTab}</div>`; return; }
+  list.innerHTML=docs.map(d=>{ const dt=fmtDateShort(d.fecha); return `<div class="doc-item" onclick="abrirDocCotizar('${d.id}')"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(d.numero||'')} <span class="badge ${tipo==='cotizacion'?'badge-gray':'badge-blue'}">${tipo==='cotizacion'?'Cotización':'Pedido'}</span></div><div class="doc-client">${esc(d.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total">MXN ${fmt(d.total)}</div></div></div>`; }).join('');
 }
 
 function nuevaCotizacion(){ const num=nextNum('COT',STATE.ventas.filter(v=>v.tipo==='cotizacion'),'numero'); STATE.currentVenta={numero:num,fecha:new Date().toISOString(),clienteId:null,clienteNombre:'',items:[],descuento:0,ajuste:0,subtotal:0,impuestos:0,total:0,pagado:0,pagos:[],estado:'pendiente',nota:'',notaInterna:'',tipo:'cotizacion'}; abrirFormVenta(); }
@@ -1543,16 +1163,9 @@ function setNCTab(tab, btn){
 
 function renderNC(){
   const list=document.getElementById('nc-list'); if(!list) return;
-  const q=(document.getElementById('nc-search')?.value||'').toLowerCase().trim();
-  let notas=STATE.notas.filter(n=>n.tipo===STATE.ncTab);
-  if(q) notas=notas.filter(n=>(n.clienteNombre||'').toLowerCase().includes(q)||(n.numero||'').toLowerCase().includes(q));
-  notas=notas.slice(0,50);
-  if(!notas.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados':'Sin NC por '+(STATE.ncTab==='devolucion'?'devolución':'merma')}</div>`; return; }
-  list.innerHTML=notas.map(n=>{
-    const dt=fmtDateShort(n.fecha);
-    const enlace=n.ventaEnlaceNum?`<button onclick="event.stopPropagation();abrirVentaPorNumero('${esc(n.ventaEnlaceNum)}')" style="background:none;border:none;color:var(--blue);font-size:10px;cursor:pointer;padding:0;text-decoration:underline"> → ${esc(n.ventaEnlaceNum)}</button>`:'';
-    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(n.numero||'')} <span class="badge badge-red">${STATE.ncTab==='devolucion'?'Devolución':'Merma'}</span>${enlace}</div><div class="doc-client">${esc(n.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-red">(-) MXN ${fmt(n.monto)}</div></div></div>`;
-  }).join('');
+  const notas=STATE.notas.filter(n=>n.tipo===STATE.ncTab).slice(0,30);
+  if(!notas.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">Sin NC por ${STATE.ncTab==='devolucion'?'devolución':'merma'}</div>`; return; }
+  list.innerHTML=notas.map(n=>{ const dt=fmtDateShort(n.fecha); return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(n.numero||'')} <span class="badge badge-red">${STATE.ncTab==='devolucion'?'Devolución':'Merma'}</span></div><div class="doc-client">${esc(n.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-red">(-) MXN ${fmt(n.monto)}</div></div></div>`; }).join('');
 }
 
 function nuevaNC(){
@@ -1601,15 +1214,11 @@ function renderGastos(){
 
 function nuevoGasto(){
   const html=`<div class="sheet-title">Registrar gasto</div><div class="sheet-body">
-    <div class="form-group"><div class="form-label">Tipo de gasto</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
-        <div class="pago-method selected" id="gasto-gasolina" onclick="selectTipoGasto('gasolina')"><div class="pago-method-icon">⛽</div><div class="pago-method-label">Gasolina</div></div>
-        <div class="pago-method" id="gasto-franelero" onclick="selectTipoGasto('franelero')"><div class="pago-method-icon">🧑</div><div class="pago-method-label">Franelero</div></div>
-        <div class="pago-method" id="gasto-mantenimiento" onclick="selectTipoGasto('mantenimiento')"><div class="pago-method-icon">🔧</div><div class="pago-method-label">Mantenimiento</div></div>
-        <div class="pago-method" id="gasto-parquimetro" onclick="selectTipoGasto('parquimetro')"><div class="pago-method-icon">🅿️</div><div class="pago-method-label">Parquímetro</div></div>
-        <div class="pago-method" id="gasto-otro" onclick="selectTipoGasto('otro')" style="grid-column:span 2"><div class="pago-method-icon">📋</div><div class="pago-method-label">Otro</div></div>
+    <div class="form-group"><div class="form-label">Tipo</div>
+      <div class="pago-methods">
+        <div class="pago-method selected" id="gasto-gasolina" onclick="selectTipoGasto('gasolina')" style="flex:1"><div class="pago-method-icon">⛽</div><div class="pago-method-label">Gasolina</div></div>
+        <div class="pago-method" id="gasto-otro" onclick="selectTipoGasto('otro')" style="flex:1"><div class="pago-method-icon">📋</div><div class="pago-method-label">Otro</div></div>
       </div></div>
-    <!-- Gasolina -->
     <div id="gasolina-fields">
       <div class="form-group"><div class="form-label">Combustible</div><select class="form-input form-select" id="g-combustible" onchange="calcGasolina()"><option value="regular">Regular (Magna)</option><option value="premium">Premium</option><option value="diesel">Diesel</option></select></div>
       <div style="display:flex;gap:10px;padding:0 16px;margin-bottom:14px">
@@ -1617,35 +1226,16 @@ function nuevoGasto(){
         <div style="flex:1"><div class="form-label">Litros</div><input type="number" id="g-litros" class="form-input" placeholder="0.00" step="0.01" oninput="calcGasolina()"></div>
       </div>
       <div id="g-calc" style="padding:0 16px 14px;font-size:13px;color:var(--text2)"></div>
+      <div class="form-group"><div class="form-label">Foto del ticket (opcional)</div>
+        <label style="display:flex;flex-direction:column;align-items:center;padding:20px;border:2px dashed var(--border);border-radius:10px;cursor:pointer;background:var(--bg)">
+          <div style="font-size:30px;margin-bottom:8px">📷</div><div style="font-size:13px;color:var(--text2)">Tomar foto del ticket</div>
+          <input type="file" accept="image/*" capture="environment" id="g-foto" style="display:none" onchange="previewFoto(this)">
+        </label>
+        <div id="g-foto-preview"></div></div>
     </div>
-    <!-- Franelero -->
-    <div id="franelero-fields" class="hidden">
-      <div class="form-group"><div class="form-label">Monto pagado ($)</div><input type="number" id="g-monto-franelero" class="form-input" placeholder="0.00" step="0.01" style="font-size:18px;font-weight:700;text-align:right"></div>
-      <div class="form-group"><div class="form-label">Ubicación / zona (opcional)</div><input class="form-input" id="g-franelero-desc" placeholder="Ej: Mercado Churubusco, Col. Roma..."></div>
-    </div>
-    <!-- Mantenimiento -->
-    <div id="mantenimiento-fields" class="hidden">
-      <div class="form-group"><div class="form-label">Descripción del mantenimiento</div><input class="form-input" id="g-mant-desc" placeholder="Ej: Cambio de aceite, frenos..."></div>
-      <div class="form-group"><div class="form-label">Monto ($)</div><input type="number" id="g-monto-mant" class="form-input" placeholder="0.00" step="0.01" style="font-size:18px;font-weight:700;text-align:right"></div>
-    </div>
-    <!-- Parquímetro -->
-    <div id="parquimetro-fields" class="hidden">
-      <div class="form-group"><div class="form-label">Monto ($)</div><input type="number" id="g-monto-parq" class="form-input" placeholder="0.00" step="0.01" style="font-size:18px;font-weight:700;text-align:right"></div>
-      <div class="form-group"><div class="form-label">Ubicación (opcional)</div><input class="form-input" id="g-parq-desc" placeholder="Ej: Calle Madero, CDMX..."></div>
-    </div>
-    <!-- Otro -->
     <div id="otro-fields" class="hidden">
       <div class="form-group"><div class="form-label">Descripción</div><input class="form-input" id="g-desc" placeholder="Describe el gasto..."></div>
       <div class="form-group"><div class="form-label">Monto ($)</div><input type="number" id="g-monto2" class="form-input" placeholder="0.00" step="0.01" style="font-size:18px;font-weight:700;text-align:right"></div>
-    </div>
-    <!-- Foto (aplica a todos) -->
-    <div class="form-group" id="g-foto-section">
-      <div class="form-label">Foto del comprobante <span id="g-foto-obligatorio" style="color:var(--red)"></span></div>
-      <label style="display:flex;flex-direction:column;align-items:center;padding:16px;border:2px dashed var(--border);border-radius:10px;cursor:pointer;background:var(--bg)">
-        <div style="font-size:28px;margin-bottom:6px">📷</div><div style="font-size:13px;color:var(--text2)">Tomar foto</div>
-        <input type="file" accept="image/*" capture="environment" id="g-foto" style="display:none" onchange="previewFoto(this)">
-      </label>
-      <div id="g-foto-preview"></div>
     </div>
     <div class="form-group"><div class="form-label">Fecha</div><input type="date" id="g-fecha" class="form-input" value="${new Date().toISOString().slice(0,10)}"></div>
     <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button><button class="btn btn-primary btn-full" onclick="guardarGasto()">Enviar para validar</button></div>
@@ -1656,13 +1246,8 @@ function nuevoGasto(){
 function selectTipoGasto(tipo){
   document.querySelectorAll('#overlay .pago-method').forEach(el=>el.classList.remove('selected'));
   document.getElementById('gasto-'+tipo)?.classList.add('selected');
-  ['gasolina','franelero','mantenimiento','parquimetro','otro'].forEach(t=>{
-    const el=document.getElementById(t+'-fields');
-    if(el) el.classList.toggle('hidden',t!==tipo);
-  });
-  // Foto obligatoria solo para parquímetro
-  const ob=document.getElementById('g-foto-obligatorio');
-  if(ob) ob.textContent=tipo==='parquimetro'?' *':'';
+  document.getElementById('gasolina-fields')?.classList.toggle('hidden',tipo!=='gasolina');
+  document.getElementById('otro-fields')?.classList.toggle('hidden',tipo!=='otro');
 }
 
 function calcGasolina(){
@@ -1686,10 +1271,10 @@ function previewFoto(input){
 }
 
 async function guardarGasto(){
+  const isGasolina=document.getElementById('gasto-gasolina')?.classList.contains('selected');
   const fecha=document.getElementById('g-fecha')?.value||new Date().toISOString().slice(0,10);
-  const tipoActivo=['gasolina','franelero','mantenimiento','parquimetro','otro'].find(t=>document.getElementById('gasto-'+t)?.classList.contains('selected'))||'otro';
   let gasto;
-  if(tipoActivo==='gasolina'){
+  if(isGasolina){
     const monto=parseFloat(document.getElementById('g-monto')?.value)||0;
     const litros=parseFloat(document.getElementById('g-litros')?.value)||0;
     const combustible=document.getElementById('g-combustible')?.value||'regular';
@@ -1698,21 +1283,6 @@ async function guardarGasto(){
     const iepsLitro={regular:6.01,premium:6.22,diesel:5.97}[combustible]||6.01;
     const iepsTotal=litros>0?litros*iepsLitro:0;
     gasto={tipo:'gasolina',combustible,monto,litros,precioLitro,iepsTotal,iva:Math.max(0,(monto-iepsTotal)*0.16),fecha,validado:false,creadoPor:STATE.user?.email};
-  } else if(tipoActivo==='franelero'){
-    const monto=parseFloat(document.getElementById('g-monto-franelero')?.value)||0;
-    if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'franelero',descripcion:document.getElementById('g-franelero-desc')?.value.trim()||'Franelero',monto,fecha,validado:false,creadoPor:STATE.user?.email};
-  } else if(tipoActivo==='mantenimiento'){
-    const monto=parseFloat(document.getElementById('g-monto-mant')?.value)||0;
-    const desc=document.getElementById('g-mant-desc')?.value.trim();
-    if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'mantenimiento',descripcion:desc||'Mantenimiento',monto,fecha,validado:false,creadoPor:STATE.user?.email};
-  } else if(tipoActivo==='parquimetro'){
-    const monto=parseFloat(document.getElementById('g-monto-parq')?.value)||0;
-    const fotoEl=document.getElementById('g-foto');
-    if(!fotoEl?.files?.length){ showToast('La foto es obligatoria para parquímetros'); return; }
-    if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'parquimetro',descripcion:document.getElementById('g-parq-desc')?.value.trim()||'Parquímetro',monto,fecha,validado:false,creadoPor:STATE.user?.email};
   } else {
     const monto=parseFloat(document.getElementById('g-monto2')?.value)||0;
     const desc=document.getElementById('g-desc')?.value.trim();
@@ -1750,841 +1320,8 @@ function closeSheet(){
 function closeOverlay(e){ if(e.target===document.getElementById('overlay')) closeSheet(); }
 
 // ─── Init ────────────────────────────────────────────────────
-
-// ─── PERIOD STATE ────────────────────────────────────────────
-const PERIOD_STORAGE = 'anakel_period_state';
-function getPeriodState(section){
-  try{ return JSON.parse(localStorage.getItem(PERIOD_STORAGE+'_'+section)||'{}'); }catch{ return {}; }
-}
-function setPeriodState(section, state){
-  localStorage.setItem(PERIOD_STORAGE+'_'+section, JSON.stringify(state));
-}
-function getDefaultPeriod(section){
-  const saved = getPeriodState(section);
-  return { tipo: saved.tipo||'mensual', ref: new Date() };
-}
-
-let _ventasPeriod = { tipo:'mensual', ref:new Date() };
-let _pagosPeriod = { tipo:'mensual', ref:new Date() };
-let _ventasFilter = 'todas';
-let _pagosFilter = 'todas';
-
-function inPeriod(fecha, period){
-  try{
-    const d = fecha?.toDate ? fecha.toDate() : new Date(fecha||0);
-    const hoy = new Date();
-    if(period.tipo==='dia'){
-      const ref = period.ref||hoy;
-      return d.toDateString()===ref.toDateString();
-    } else if(period.tipo==='semana'){
-      const ref = period.ref||hoy;
-      const lunes = new Date(ref); lunes.setDate(ref.getDate()-(ref.getDay()||7)+1); lunes.setHours(0,0,0,0);
-      const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6); domingo.setHours(23,59,59,999);
-      return d>=lunes && d<=domingo;
-    } else if(period.tipo==='mensual'){
-      const ref = period.ref||hoy;
-      return d.getMonth()===ref.getMonth() && d.getFullYear()===ref.getFullYear();
-    } else if(period.tipo==='personalizado'){
-      const desde = new Date(period.desde+'T00:00:00');
-      const hasta = new Date(period.hasta+'T23:59:59');
-      return d>=desde && d<=hasta;
-    }
-    return true;
-  }catch{ return false; }
-}
-
-function periodLabel(period){
-  const hoy = new Date();
-  const ref = period.ref||hoy;
-  if(period.tipo==='dia') return ref.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short'});
-  if(period.tipo==='semana'){
-    const lunes = new Date(ref); lunes.setDate(ref.getDate()-(ref.getDay()||7)+1);
-    const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6);
-    return `${lunes.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})} – ${domingo.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}`;
-  }
-  if(period.tipo==='mensual') return ref.toLocaleDateString('es-MX',{month:'short',year:'numeric'});
-  if(period.tipo==='personalizado') return `${period.desde||''} – ${period.hasta||''}`;
-  return '';
-}
-
-function periodTipoLabel(tipo){ return {dia:'Diario',semana:'Semanal',mensual:'Mensual',personalizado:'Personalizado'}[tipo]||'Mensual'; }
-
-function abrirSelectorPeriodo(section){
-  const period = section==='ventas'?_ventasPeriod:_pagosPeriod;
-  const html=`<div class="sheet-title">Período de visualización</div><div class="sheet-body" style="padding:16px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      ${['dia','semana','mensual','personalizado'].map(t=>`
-        <div class="pago-method ${period.tipo===t?'selected':''}" onclick="selectPeriodTipo('${section}','${t}')" id="period-tipo-${t}" style="padding:12px">
-          <div class="pago-method-label">${periodTipoLabel(t)}</div>
-        </div>`).join('')}
-    </div>
-    <div id="period-custom-wrap" style="${period.tipo==='personalizado'?'':'display:none'}">
-      <div class="form-label">Desde</div>
-      <input type="date" id="period-desde" class="form-input" value="${period.desde||new Date().toISOString().slice(0,10)}" style="margin-bottom:10px">
-      <div class="form-label">Hasta</div>
-      <input type="date" id="period-hasta" class="form-input" value="${period.hasta||new Date().toISOString().slice(0,10)}">
-    </div>
-    <div class="action-bar" style="margin-top:16px;padding:0">
-      <button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="aplicarPeriodo('${section}')">Aplicar</button>
-    </div>
-  </div>`;
-  openSheet(html, true);
-}
-
-function selectPeriodTipo(section, tipo){
-  document.querySelectorAll('[id^=period-tipo-]').forEach(el=>el.classList.remove('selected'));
-  document.getElementById('period-tipo-'+tipo)?.classList.add('selected');
-  const wrap=document.getElementById('period-custom-wrap');
-  if(wrap) wrap.style.display=tipo==='personalizado'?'':'none';
-}
-
-function aplicarPeriodo(section){
-  const tipo = document.querySelector('[id^=period-tipo-].selected')?.id?.replace('period-tipo-','') || 'mensual';
-  let period = { tipo, ref:new Date() };
-  if(tipo==='personalizado'){
-    period.desde = document.getElementById('period-desde')?.value;
-    period.hasta = document.getElementById('period-hasta')?.value;
-  }
-  if(section==='ventas'){ _ventasPeriod=period; setPeriodState('ventas',{tipo,desde:period.desde,hasta:period.hasta}); renderVentas(); }
-  else { _pagosPeriod=period; setPeriodState('pagos',{tipo,desde:period.desde,hasta:period.hasta}); renderPagos(); }
-  closeSheet();
-}
-
-function changePeriod(dir){
-  const p=_ventasPeriod;
-  const ref = new Date(p.ref||new Date());
-  if(p.tipo==='dia') ref.setDate(ref.getDate()+dir);
-  else if(p.tipo==='semana') ref.setDate(ref.getDate()+dir*7);
-  else if(p.tipo==='mensual') ref.setMonth(ref.getMonth()+dir);
-  _ventasPeriod.ref=ref; renderVentas();
-}
-
-function changePeriodPagos(dir){
-  const p=_pagosPeriod;
-  const ref = new Date(p.ref||new Date());
-  if(p.tipo==='dia') ref.setDate(ref.getDate()+dir);
-  else if(p.tipo==='semana') ref.setDate(ref.getDate()+dir*7);
-  else if(p.tipo==='mensual') ref.setMonth(ref.getMonth()+dir);
-  _pagosPeriod.ref=ref; renderPagos();
-}
-
-function setPagosFilter(f, btn){
-  _pagosFilter=f;
-  document.querySelectorAll('#page-pagos .filter-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderPagos();
-}
-
-// ─── NOTIFICATIONS (CHOFER) ──────────────────────────────────
-let _choferNotifs = [];
-
-function actualizarNotifBadge(){
-  const badge=document.getElementById('chofer-notif-badge');
-  if(!badge) return;
-  const n=_choferNotifs.filter(n=>!n.leida).length;
-  badge.textContent=n||''; badge.style.display=n?'inline-flex':'none';
-}
-
-function agregarNotif(msg, tipo='info'){
-  _choferNotifs.unshift({id:Date.now(),msg,tipo,fecha:new Date().toISOString(),leida:false});
-  actualizarNotifBadge();
-}
-
-function mostrarNotificacionesChofer(){
-  const html=`<div class="sheet-title">🔔 Notificaciones</div><div class="sheet-body">
-    ${_choferNotifs.length?_choferNotifs.map(n=>`
-      <div style="padding:12px 16px;border-bottom:1px solid var(--border);${n.leida?'opacity:0.6':''}">
-        <div style="font-size:14px">${esc(n.msg)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px">${new Date(n.fecha).toLocaleString('es-MX')}</div>
-      </div>`).join(''):'<div style="padding:40px;text-align:center;color:var(--text3)">Sin notificaciones</div>'}
-    <div style="padding:16px"><button class="btn btn-full" onclick="_choferNotifs.forEach(n=>n.leida=true);actualizarNotifBadge();closeSheet()">Marcar todas como leídas</button></div>
-  </div>`;
-  openSheet(html);
-  _choferNotifs.forEach(n=>n.leida=true); actualizarNotifBadge();
-}
-
-// ─── SYNC STATUS ─────────────────────────────────────────────
-let _lastSyncTime = null;
-
-function updateSyncBar(){
-  const bar=document.getElementById('sync-bar');
-  if(!bar) return;
-  if(!_lastSyncTime){ bar.textContent='Sin sincronizar'; return; }
-  bar.textContent='Última sync: '+_lastSyncTime.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-}
-
-// ─── INVENTARIO DEL CARRO ────────────────────────────────────
-
-
-// ─── PERMISOS POR USUARIO ────────────────────────────────────
-const PERMISOS_DEFAULT_CHOFER = {
-  editarVentasGuardadas: false,
-  eliminarDirecto: false,
-  verPreciosCosto: false,
-  cambiarPrecioVenta: true,
-  aplicarDescuentos: false,
-  verSaldosTodos: true,
-  aumentarCreditoDirecto: false,
-  verInformesFinanzas: false,
-};
-const PERMISOS_DEFAULT_ADMIN = {
-  editarVentasGuardadas: true,
-  eliminarDirecto: true,
-  verPreciosCosto: true,
-  cambiarPrecioVenta: true,
-  aplicarDescuentos: true,
-  verSaldosTodos: true,
-  aumentarCreditoDirecto: true,
-  verInformesFinanzas: true,
-};
-const PERMISOS_LABELS = {
-  editarVentasGuardadas: 'Editar ventas ya guardadas',
-  eliminarDirecto: 'Eliminar ventas sin solicitud',
-  verPreciosCosto: 'Ver precios de costo',
-  cambiarPrecioVenta: 'Cambiar precio en venta',
-  aplicarDescuentos: 'Aplicar descuentos',
-  verSaldosTodos: 'Ver saldos de todos los clientes',
-  aumentarCreditoDirecto: 'Aumentar crédito directamente',
-  verInformesFinanzas: 'Ver informes de finanzas',
-};
-const ADMIN_EMAIL = 'anakeldistribuidora@outlook.com';
-
-function getUserPermisos(){
-  const email=STATE.user?.email||'';
-  if(email===ADMIN_EMAIL) return PERMISOS_DEFAULT_ADMIN;
-  try{
-    const saved=JSON.parse(localStorage.getItem('anakel_permisos_'+email)||'{}');
-    return {...PERMISOS_DEFAULT_CHOFER,...saved};
-  }catch{ return PERMISOS_DEFAULT_CHOFER; }
-}
-
-function puedo(permiso){
-  const p=getUserPermisos();
-  return p[permiso]===true;
-}
-
-function mostrarMenuPermisos(){
-  if(STATE.user?.email!==ADMIN_EMAIL){ showToast('Solo el administrador puede ver esto'); return; }
-  // Load all known users from solicitudes/ventas
-  const usuarios=[...new Set([
-    ...STATE.ventas.map(v=>v.creadoPor),
-    ...STATE.pagos.map(p=>p.creadoPor),
-  ].filter(e=>e&&e!==ADMIN_EMAIL))];
-
-  const html=`<div class="sheet-title">⚙️ Permisos de usuarios</div><div class="sheet-body">
-    ${!usuarios.length?'<div style="padding:20px 16px;color:var(--text2);font-size:13px">Sin otros usuarios registrados aún. Los permisos aparecerán aquí cuando el chofer use la app.</div>':
-    usuarios.map(email=>{
-      const saved=JSON.parse(localStorage.getItem('anakel_permisos_'+email)||'{}');
-      const actual={...PERMISOS_DEFAULT_CHOFER,...saved};
-      return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-        <div style="font-size:14px;font-weight:600;margin-bottom:10px">👤 ${esc(email)}</div>
-        ${Object.entries(PERMISOS_LABELS).map(([key,label])=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-            <div style="font-size:13px">${label}</div>
-            <label style="position:relative;display:inline-block;width:44px;height:24px">
-              <input type="checkbox" ${actual[key]?'checked':''} onchange="togglePermiso('${email}','${key}',this.checked)" style="opacity:0;width:0;height:0">
-              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${actual[key]?'var(--green)':'var(--border)'};border-radius:24px;transition:.3s">
-                <span style="position:absolute;height:18px;width:18px;left:${actual[key]?'23px':'3px'};bottom:3px;background:white;border-radius:50%;transition:.3s"></span>
-              </span>
-            </label>
-          </div>`).join('')}
-      </div>`;
-    }).join('')}
-    <div style="padding:16px"><button class="btn btn-full" onclick="closeSheet()">Cerrar</button></div>
-  </div>`;
-  openSheet(html);
-}
-
-function togglePermiso(email, key, value){
-  try{
-    const saved=JSON.parse(localStorage.getItem('anakel_permisos_'+email)||'{}');
-    saved[key]=value;
-    localStorage.setItem('anakel_permisos_'+email, JSON.stringify(saved));
-    // Also save to Firebase so it persists across devices
-    if(_db&&_fbFs){
-      const {collection,doc,setDoc}=_fbFs;
-      setDoc(doc(collection(_db,'permisos'),email),{...PERMISOS_DEFAULT_CHOFER,...saved,email,updatedAt:new Date().toISOString()},{merge:true}).catch(()=>{});
-    }
-  }catch(e){ showToast('Error guardando permisos'); }
-}
-
-// Load permisos from Firebase on login
-async function loadPermisosFromFirebase(){
-  if(!_db||!_fbFs||!STATE.user) return;
-  try{
-    const email=STATE.user.email;
-    if(email===ADMIN_EMAIL) return;
-    const {collection,doc,getDoc}=_fbFs;
-    const snap=await getDoc(doc(collection(_db,'permisos'),email));
-    if(snap.exists()){
-      localStorage.setItem('anakel_permisos_'+email, JSON.stringify(snap.data()));
-    }
-  }catch(e){}
-}
-
-function aplicarLimiteCreditoDefault(){
-  // Default credit limit: 600 for all. If saldo > 600, limit = saldo * 1.10 rounded to hundreds
-  let changed=false;
-  STATE.clientes = STATE.clientes.map(c=>{
-    if(c.limiteCredito&&c.limiteCredito>0) return c; // already has a limit set
-    const saldo=Math.abs(c.saldo||0);
-    let limite=600;
-    if(saldo>600){
-      limite=Math.ceil((saldo*1.10)/100)*100; // round up to nearest 100
-    }
-    changed=true;
-    return {...c,limiteCredito:limite};
-  });
-}
-function renderProductos(){
-  const list=document.getElementById('productos-list'); if(!list) return;
-  const q=(document.getElementById('prod-inv-search')?.value||'').toLowerCase().trim();
-  let prods=STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo');
-  if(q) prods=prods.filter(p=>(p.nombre||'').toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(p.categoria||'').toLowerCase().includes(q));
-  if(_filtroCategoriasActivas.length>0) prods=prods.filter(p=>_filtroCategoriasActivas.includes(p.categoria||'Sin categoría'));
-  // Sort by category then name
-  prods.sort((a,b)=>{
-    const ca=a.categoria||'Sin categoría', cb=b.categoria||'Sin categoría';
-    if(ca!==cb) return ca.localeCompare(cb,'es');
-    return (a.nombre||'').localeCompare(b.nombre||'','es');
-  });
-  if(!prods.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin productos.</div>'; return; }
-  let html='<div style="background:var(--surface)">';
-  let lastCat=null;
-  prods.forEach(p=>{
-    const cat=p.categoria||'Sin categoría';
-    if(cat!==lastCat){
-      html+=`<div style="padding:8px 16px;background:var(--bg2);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px">${esc(cat)}</div>`;
-      lastCat=cat;
-    }
-    html+=`<div style="padding:13px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:15px;font-weight:500">${esc(p.nombre||p.sku)}</div>
-        <div style="font-size:12px;color:var(--text2)">${esc(p.sku||'')} · MXN ${fmt(p.precio||0)}${p.unidad?' / '+esc(p.unidad):''}</div>
-      </div>
-      <div style="text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end">
-        ${p.iva===true?'<span class="badge badge-blue" style="font-size:10px">IVA 16%</span>':''}
-        ${p.iva==='cero'?'<span class="badge badge-gray" style="font-size:10px">IVA 0%</span>':''}
-        ${p.ieps?'<span class="badge badge-amber" style="font-size:10px">IEPS 8%</span>':''}
-      </div>
-    </div>`;
-  });
-  html+='</div>';
-  list.innerHTML=html;
-}
-
-// ─── AVISO PEDIDOS DEL DÍA ───────────────────────────────────
-function verificarPedidosDelDia(){
-  const hoy = new Date().toDateString();
-  const key = 'anakel_pedidos_aviso_'+STATE.user?.email+'_'+hoy;
-  if(localStorage.getItem(key)) return; // ya se mostró hoy
-  const pedidosHoy = STATE.ventas.filter(v=>{
-    if(v.tipo!=='pedido') return false;
-    try{ const d=v.fecha?.toDate?v.fecha.toDate():new Date(v.fecha||0); return d.toDateString()===hoy; }catch{ return false; }
-  });
-  if(pedidosHoy.length){
-    localStorage.setItem(key,'1');
-    const total=pedidosHoy.reduce((s,p)=>s+(p.total||0),0);
-    setTimeout(()=>{
-      if(confirm(`📦 Tienes ${pedidosHoy.length} pedido(s) de venta para HOY por MXN ${fmt(total)}.
-
-¿Ver pedidos del día?`)){
-        navTo('cotizar', document.querySelector('[onclick*="cotizar"]'));
-        setCotizarTab('pedidos', document.querySelector('#page-cotizar .filter-tab:nth-child(2)'));
-      }
-    }, 1500);
-  }
-}
-
-// ─── LISTEN FOR CREDIT INCREASES FROM ERP ───────────────────
-function setupChoferRealtimeListeners(){
-  if(!_db||!_fbFs) return;
-  const { collection, query, where, onSnapshot } = _fbFs;
-  // Listen for solicitudes that were approved/rejected for this user
-  try{
-    onSnapshot(query(collection(_db,'solicitudes')),snap=>{
-      snap.docChanges().forEach(change=>{
-        if(change.type==='modified'){
-          const sol=change.doc.data();
-          if(sol.solicitante===STATE.user?.email&&sol.estado==='aprobada'&&sol.tipo==='aumento_credito'){
-            agregarNotif(`✅ Crédito aprobado para ${sol.clienteNombre}: límite aumentado a $${fmt(sol.limiteActual+(sol.montoSolicitado||0))}`,'success');
-          }
-          if(sol.solicitante===STATE.user?.email&&sol.estado==='rechazada'){
-            agregarNotif(`❌ Solicitud rechazada para ${sol.clienteNombre}`,'error');
-          }
-        }
-      });
-      // Also update local client limits
-      loadAllData();
-    });
-  }catch(e){}
-}
-
-// ─── MERMAS Y DEVOLUCIONES EN VENTA ──────────────────────────
-function abrirMermaEnVenta(){
-  const v=STATE.currentVenta; if(!v) return;
-  const html=`<div class="sheet-title">Agregar merma a esta venta</div><div class="sheet-body">
-    <div class="alert alert-amber" style="margin:0 16px 12px;font-size:12px">La merma generará una NC enlazada a esta venta y se registrará en el apartado de NC.</div>
-    <div class="form-group"><div class="form-label">Producto</div>
-      <select class="form-input form-select" id="mv-producto" onchange="actualizarMotivosMerma(this.value)">
-        ${STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>`<option value="${p.id}" data-sku="${esc(p.sku||'')}">${esc(p.nombre||p.sku)}</option>`).join('')}
-      </select></div>
-    <div class="form-group"><div class="form-label">Cantidad</div>
-      <input type="number" id="mv-cant" class="form-input" value="1" min="0.01" step="0.01"></div>
-    <div class="form-group"><div class="form-label">Motivo</div>
-      <select class="form-input form-select" id="mv-motivo"></select></div>
-    <div class="form-group" id="mv-otro-wrap" style="display:none"><div class="form-label">Especifica el motivo</div>
-      <input class="form-input" id="mv-otro" placeholder="Describe qué pasó..."></div>
-    <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarMermaEnVenta()">Agregar merma</button></div>
-  </div>`;
-  openSheet(html,true);
-  // Init motivos for first product
-  setTimeout(()=>{
-    const sel=document.getElementById('mv-producto');
-    if(sel) actualizarMotivosMerma(sel.value);
-  },100);
-}
-
-async function guardarMermaEnVenta(){
-  const v=STATE.currentVenta; if(!v) return;
-  const prodId=document.getElementById('mv-producto')?.value;
-  const cant=parseFloat(document.getElementById('mv-cant')?.value)||1;
-  const motivoBase=document.getElementById('mv-motivo')?.value||'';
-  const motivoOtro=document.getElementById('mv-otro')?.value?.trim()||'';
-  const motivo=motivoBase==='Otro'&&motivoOtro?('Otro — '+motivoOtro):motivoBase;
-  const p=STATE.productos.find(x=>String(x.id)===String(prodId)); if(!p) return;
-  const monto=cant*(p.precio||0);
-  if(!v.mermas) v.mermas=[];
-  v.mermas.push({productoId:p.id,nombre:p.nombre||p.sku,cantidad:cant,motivo,monto});
-  // Create linked NC
-  const num=nextNum('NC',STATE.notas,'numero');
-  const nc={numero:num,tipo:'merma',clienteId:v.clienteId,clienteNombre:v.clienteNombre,monto,motivo,aplicada:false,fecha:new Date().toISOString().slice(0,10),creadoPor:STATE.user?.email,ventaEnlaceId:v.id||v.numero,ventaEnlaceNum:v.numero};
-  try{
-    const {collection,addDoc}=_fbFs;
-    const ref=await addDoc(collection(_db,'notas_credito'),nc);
-    STATE.notas.unshift({...nc,id:ref.id});
-  }catch(e){ addToQueue({type:'add',col:'notas_credito',id:'nc_'+Date.now(),data:nc}); }
-  closeSheet(); setTimeout(abrirFormVenta,100);
-  showToast('Merma registrada y NC creada ✓');
-}
-
-function abrirDevolucionEnVenta(){
-  const v=STATE.currentVenta; if(!v) return;
-  const html=`<div class="sheet-title">Agregar devolución a esta venta</div><div class="sheet-body">
-    <div class="alert alert-amber" style="margin:0 16px 12px;font-size:12px">La devolución generará una NC enlazada a esta venta.</div>
-    <div class="form-group"><div class="form-label">Producto</div>
-      <select class="form-input form-select" id="dv-producto">
-        ${STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>`<option value="${p.id}">${esc(p.nombre||p.sku)}</option>`).join('')}
-      </select></div>
-    <div class="form-group"><div class="form-label">Cantidad</div>
-      <input type="number" id="dv-cant" class="form-input" value="1" min="0.01" step="0.01"></div>
-    <div class="form-group"><div class="form-label">Motivo</div>
-      <select class="form-input form-select" id="dv-motivo">
-        ${['No se vendió','Cambio por otro producto','Otro'].map(m=>`<option value="${m}">${m}</option>`).join('')}
-      </select></div>
-    <div class="form-group" id="dv-otro-wrap" style="display:none"><div class="form-label">Especifica el motivo</div>
-      <input class="form-input" id="dv-otro" placeholder="Describe qué pasó..."></div>
-    <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarDevolucionEnVenta()">Agregar devolución</button></div>
-  </div>`;
-  openSheet(html,true);
-}
-
-async function guardarDevolucionEnVenta(){
-  const v=STATE.currentVenta; if(!v) return;
-  const prodId=document.getElementById('dv-producto')?.value;
-  const cant=parseFloat(document.getElementById('dv-cant')?.value)||1;
-  const motivoBase=document.getElementById('dv-motivo')?.value||'';
-  const motivoOtro=document.getElementById('dv-otro')?.value?.trim()||'';
-  const motivo=motivoBase==='Otro'&&motivoOtro?('Otro — '+motivoOtro):motivoBase;
-  const p=STATE.productos.find(x=>String(x.id)===String(prodId)); if(!p) return;
-  const monto=cant*(p.precio||0);
-  if(!v.devoluciones) v.devoluciones=[];
-  v.devoluciones.push({productoId:p.id,nombre:p.nombre||p.sku,cantidad:cant,motivo,monto});
-  const num=nextNum('NC',STATE.notas,'numero');
-  const nc={numero:num,tipo:'devolucion',clienteId:v.clienteId,clienteNombre:v.clienteNombre,monto,motivo,aplicada:false,fecha:new Date().toISOString().slice(0,10),creadoPor:STATE.user?.email,ventaEnlaceId:v.id||v.numero,ventaEnlaceNum:v.numero};
-  try{
-    const {collection,addDoc}=_fbFs;
-    const ref=await addDoc(collection(_db,'notas_credito'),nc);
-    STATE.notas.unshift({...nc,id:ref.id});
-  }catch(e){ addToQueue({type:'add',col:'notas_credito',id:'nc_'+Date.now(),data:nc}); }
-  closeSheet(); setTimeout(abrirFormVenta,100);
-  showToast('Devolución registrada y NC creada ✓');
-}
-
-// ─── PEDIDOS DEL DÍA ─────────────────────────────────────────
-function mostrarPedidosDelDia(){
-  const hoy=new Date().toDateString();
-  const pedidos=STATE.ventas.filter(v=>{
-    if(v.tipo!=='pedido') return false;
-    try{ const d=v.fecha?.toDate?v.fecha.toDate():new Date(v.fecha||0); return d.toDateString()===hoy; }catch{ return false; }
-  });
-  const html=`<div class="sheet-title">📦 Pedidos del día</div><div class="sheet-body">
-    ${pedidos.length?`
-      <div style="padding:0 16px;margin-bottom:10px;font-size:13px;color:var(--text2)">${pedidos.length} pedido(s) para hoy</div>
-      ${pedidos.map(p=>`<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-        <div style="font-weight:600;font-size:15px">${esc(p.clienteNombre||'')}</div>
-        <div style="font-size:12px;color:var(--text2)">${esc(p.numero||'')} · MXN ${fmt(p.total||0)}</div>
-        ${(p.items||[]).map(it=>`<div style="font-size:12px;padding:2px 0;color:var(--text2)">• ${esc(it.nombre)} × ${it.cantidad}</div>`).join('')}
-      </div>`).join('')}`
-    :'<div style="padding:40px;text-align:center;color:var(--text3)">Sin pedidos para hoy</div>'}
-    <div style="padding:16px"><button class="btn btn-full" onclick="closeSheet()">Cerrar</button></div>
-  </div>`;
-  openSheet(html);
-}
-
 updateSyncBadge();
 document.getElementById('login-pass')?.addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-// Android back button: close sheet instead of app
-window.addEventListener('popstate', e=>{
-  if(sheetStack.length>0){ closeSheet(); history.pushState(null,'',location.href); }
-});
-history.pushState(null,'',location.href);
-
-
-// ─── ESTADO FILTROS (persisten en sesión) ────────────────────
-let _filtroRutasActivas = []; // [] = todas
-let _filtroCategoriasActivas = []; // [] = todas
-
-// ─── FILTRO DE RUTAS EN CLIENTES ─────────────────────────────
-function abrirFiltroRutas(){
-  const rutas=[...new Set(STATE.clientes.filter(c=>c.activo!==false).map(c=>c.rutaNombre||c._rutaNombre||'Sin ruta'))].sort((a,b)=>a.localeCompare(b,'es'));
-  const html=`<div class="sheet-title">Filtrar por ruta</div><div class="sheet-body">
-    <div style="padding:0 16px 10px;display:flex;gap:8px">
-      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fr-chk-]').forEach(c=>c.checked=true)">Todas</button>
-      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fr-chk-]').forEach(c=>c.checked=false)">Ninguna</button>
-    </div>
-    <div style="background:var(--surface)">
-      ${rutas.map((r,i)=>`<label style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer">
-        <input type="checkbox" id="fr-chk-${i}" value="${esc(r)}" ${_filtroRutasActivas.length===0||_filtroRutasActivas.includes(r)?'checked':''} style="width:18px;height:18px">
-        <span style="font-size:15px">${esc(r)}</span>
-      </label>`).join('')}
-    </div>
-    <div class="action-bar">
-      <button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="aplicarFiltroRutas()">Aplicar</button>
-    </div>
-  </div>`;
-  openSheet(html);
-}
-
-function aplicarFiltroRutas(){
-  const checks=document.querySelectorAll('[id^=fr-chk-]');
-  const seleccionadas=[...checks].filter(c=>c.checked).map(c=>c.value);
-  const todas=seleccionadas.length===checks.length;
-  _filtroRutasActivas=todas?[]:seleccionadas;
-  const bar=document.getElementById('cli-filtro-activo');
-  const btn=document.getElementById('btn-filtro-rutas');
-  if(bar){
-    if(_filtroRutasActivas.length>0){
-      bar.style.display='';
-      bar.innerHTML=`Filtrando: ${_filtroRutasActivas.map(r=>`<strong>${esc(r)}</strong>`).join(', ')} <button onclick="_filtroRutasActivas=[];renderClientes();document.getElementById('cli-filtro-activo').style.display='none';document.getElementById('btn-filtro-rutas').textContent='Ruta ▾'" style="margin-left:8px;background:none;border:none;cursor:pointer;color:var(--amber);font-weight:700">✕ Quitar</button>`;
-      if(btn) btn.textContent='Ruta ✓';
-    } else {
-      bar.style.display='none';
-      if(btn) btn.textContent='Ruta ▾';
-    }
-  }
-  closeSheet();
-  renderClientes();
-}
-
-// ─── FILTRO DE CATEGORÍAS EN PRODUCTOS ───────────────────────
-function abrirFiltroCategorias(){
-  const cats=[...new Set(STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo').map(p=>p.categoria||'Sin categoría'))].sort((a,b)=>a.localeCompare(b,'es'));
-  const html=`<div class="sheet-title">Filtrar por categoría</div><div class="sheet-body">
-    <div style="padding:0 16px 10px;display:flex;gap:8px">
-      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fc-chk-]').forEach(c=>c.checked=true)">Todas</button>
-      <button class="btn btn-sm" onclick="document.querySelectorAll('[id^=fc-chk-]').forEach(c=>c.checked=false)">Ninguna</button>
-    </div>
-    <div style="background:var(--surface)">
-      ${cats.map((cat,i)=>`<label style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer">
-        <input type="checkbox" id="fc-chk-${i}" value="${esc(cat)}" ${_filtroCategoriasActivas.length===0||_filtroCategoriasActivas.includes(cat)?'checked':''} style="width:18px;height:18px">
-        <span style="font-size:15px">${esc(cat)}</span>
-      </label>`).join('')}
-    </div>
-    <div class="action-bar">
-      <button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="aplicarFiltroCategorias()">Aplicar</button>
-    </div>
-  </div>`;
-  openSheet(html);
-}
-
-function aplicarFiltroCategorias(){
-  const checks=document.querySelectorAll('[id^=fc-chk-]');
-  const seleccionadas=[...checks].filter(c=>c.checked).map(c=>c.value);
-  const todas=seleccionadas.length===checks.length;
-  _filtroCategoriasActivas=todas?[]:seleccionadas;
-  const bar=document.getElementById('prod-filtro-activo');
-  const btn=document.getElementById('btn-filtro-cats');
-  if(bar){
-    if(_filtroCategoriasActivas.length>0){
-      bar.style.display='';
-      bar.innerHTML=`${_filtroCategoriasActivas.join(', ')} <button onclick="_filtroCategoriasActivas=[];renderProductos();document.getElementById('prod-filtro-activo').style.display='none';document.getElementById('btn-filtro-cats').textContent='Cat. ▾'" style="margin-left:8px;background:none;border:none;cursor:pointer;color:var(--blue);font-weight:700">✕</button>`;
-      if(btn) btn.textContent='Cat. ✓';
-    } else {
-      bar.style.display='none';
-      if(btn) btn.textContent='Cat. ▾';
-    }
-  }
-  closeSheet();
-  renderProductos();
-}
-
-// ─── NOTAS POR CLIENTE ───────────────────────────────────────
-function renderNotasPage(){
-  const list=document.getElementById('notas-list'); if(!list) return;
-  const q=(document.getElementById('notas-search')?.value||'').toLowerCase().trim();
-  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
-  let filtradas=notas.slice().reverse();
-  if(q) filtradas=filtradas.filter(n=>(n.clienteNombre||'').toLowerCase().includes(q)||(n.texto||'').toLowerCase().includes(q));
-  if(!filtradas.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin notas. Agrega notas desde la ficha de un cliente.</div>'; return; }
-  list.innerHTML='<div style="background:var(--surface)">'+filtradas.map(n=>`
-    <div style="padding:13px 16px;border-bottom:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <div style="font-size:13px;font-weight:600;color:var(--accent)">${esc(n.clienteNombre||'')}</div>
-        <div style="font-size:11px;color:var(--text3)">${n.fecha||''}</div>
-      </div>
-      <div style="font-size:14px;line-height:1.5">${esc(n.texto||'')}</div>
-      ${n.proximaEntrega?`<div style="margin-top:6px;padding:4px 8px;background:var(--amber-bg);border-radius:6px;font-size:12px;color:var(--amber)">📦 Para próxima entrega</div>`:''}
-    </div>`).join('')+'</div>';
-}
-
-function nuevaNotaDirecta(){
-  const html=`<div class="sheet-title">Nueva nota</div><div class="sheet-body">
-    <div class="form-group"><div class="form-label">Cliente</div>
-      <input class="form-input" id="nn-cliente" list="nn-cli-list" placeholder="Buscar cliente...">
-      <datalist id="nn-cli-list">${STATE.clientes.map(c=>`<option value="${esc(c.nombre)}"></option>`).join('')}</datalist>
-    </div>
-    <div class="form-group"><div class="form-label">Nota</div>
-      <textarea class="form-input" id="nn-texto" rows="4" style="resize:none" placeholder="Escribe la nota..."></textarea>
-    </div>
-    <div class="form-group">
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" id="nn-proxima" style="width:18px;height:18px">
-        <span style="font-size:14px">Es para la próxima entrega (aparecerá al crear venta)</span>
-      </label>
-    </div>
-    <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarNotaCliente()">Guardar nota</button></div>
-  </div>`;
-  openSheet(html);
-}
-
-function guardarNotaInlineCliente(clienteId, clienteNombre){
-  const texto=document.getElementById('nota-nueva-texto')?.value.trim();
-  if(!texto){ showToast('Escribe una nota'); return; }
-  const nota={id:'nota_'+Date.now(),clienteId,clienteNombre,texto,proximaEntrega:document.getElementById('nota-nueva-proxima')?.checked||false,fecha:new Date().toLocaleDateString('es-MX'),creadoPor:STATE.user?.email,ts:Date.now(),mostrada:false};
-  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
-  notas.push(nota);
-  localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
-  if(_db&&_fbFs){const{collection,addDoc}=_fbFs;addDoc(collection(_db,'notas_clientes'),nota).catch(()=>{});}
-  closeSheet();
-  showToast('Nota guardada ✓');
-}
-
-function guardarNotaCliente(clienteNombre, clienteId){
-  const nombre=clienteNombre||document.getElementById('nn-cliente')?.value.trim();
-  const texto=document.getElementById('nn-texto')?.value.trim();
-  const proximaEntrega=document.getElementById('nn-proxima')?.checked||false;
-  if(!nombre||!texto){ showToast('Completa todos los campos'); return; }
-  const cli=STATE.clientes.find(c=>c.nombre===nombre);
-  const nota={id:'nota_'+Date.now(),clienteId:clienteId||cli?.id,clienteNombre:nombre,texto,proximaEntrega,fecha:new Date().toLocaleDateString('es-MX'),creadoPor:STATE.user?.email,ts:Date.now()};
-  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
-  notas.push(nota);
-  localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
-  // Also save to Firebase
-  if(_db&&_fbFs){
-    const {collection,addDoc}=_fbFs;
-    addDoc(collection(_db,'notas_clientes'),nota).catch(()=>{});
-  }
-  closeSheet();
-  renderNotasPage();
-  showToast('Nota guardada ✓');
-}
-
-function abrirNotasCliente(clienteId, clienteNombre){
-  const todasNotas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
-  const notasCli=todasNotas.filter(n=>String(n.clienteId)===String(clienteId)||n.clienteNombre===clienteNombre).slice().reverse();
-  const html=`<div class="sheet-title">📝 Notas — ${esc(clienteNombre)}</div><div class="sheet-body">
-    ${notasCli.length?notasCli.map(n=>`
-      <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <div style="font-size:12px;color:var(--text2)">${n.fecha||''} · ${esc(n.creadoPor||'')}</div>
-          ${n.proximaEntrega?'<span class="badge badge-amber">Próxima entrega</span>':''}
-        </div>
-        <div style="font-size:14px;line-height:1.5">${esc(n.texto||'')}</div>
-      </div>`).join('')
-    :'<div style="padding:30px;text-align:center;color:var(--text3)">Sin notas para este cliente</div>'}
-    <div style="padding:12px 16px;border-top:1px solid var(--border)">
-      <textarea class="form-input" id="nota-nueva-texto" rows="3" style="resize:none;margin-bottom:8px" placeholder="Agregar nueva nota..."></textarea>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer">
-        <input type="checkbox" id="nota-nueva-proxima" style="width:16px;height:16px">
-        <span style="font-size:13px">Para próxima entrega</span>
-      </label>
-      <button class="btn btn-primary btn-full" onclick="guardarNotaInlineCliente('${clienteId}','${esc(clienteNombre)}')">Guardar nota</button>
-    </div>
-  </div>`;
-  openSheet(html,true);
-}
-
-function verificarNotasProximaEntrega(clienteId, clienteNombre){
-  const notas=JSON.parse(localStorage.getItem('anakel_notas_clientes')||'[]');
-  const pendientes=notas.filter(n=>(String(n.clienteId)===String(clienteId)||n.clienteNombre===clienteNombre)&&n.proximaEntrega&&!n.mostrada);
-  if(pendientes.length){
-    // Mark as shown
-    notas.forEach(n=>{ if(pendientes.find(p=>p.id===n.id)) n.mostrada=true; });
-    localStorage.setItem('anakel_notas_clientes',JSON.stringify(notas));
-    // Show alert
-    const msgs=pendientes.map(n=>n.texto).join('\n\n');
-    openSheet(`<div class="sheet-title">📦 Notas para esta entrega</div><div style="padding:16px">
-      <div style="background:var(--amber-bg);border-radius:10px;padding:14px;font-size:15px;line-height:1.7;color:var(--text);white-space:pre-wrap">${esc(msgs)}</div>
-      <div style="margin-top:16px"><button class="btn btn-primary btn-full btn-lg" onclick="closeSheet()">Entendido</button></div>
-    </div>`,true);
-  }
-}
-
-// ─── ALERTAS POR CLIENTE ─────────────────────────────────────
-function verificarAlertaCliente(clienteId, clienteNombre){
-  const c=STATE.clientes.find(x=>String(x.id)===String(clienteId));
-  if(!c?.alerta) return;
-  openSheet(`<div class="sheet-title">⚠️ Alerta — ${esc(clienteNombre)}</div><div style="padding:16px">
-    <div style="background:var(--red-bg);border-radius:10px;padding:14px;font-size:15px;line-height:1.7;color:var(--red);font-weight:500">${esc(c.alerta)}</div>
-    <div style="margin-top:16px"><button class="btn btn-primary btn-full btn-lg" onclick="closeSheet()">Aceptar</button></div>
-  </div>`,true);
-}
-
-
-// ─── AYUDA AJUSTE REDONDEO ───────────────────────────────────
-function mostrarAyudaAjuste(){
-  openSheet(`<div class="sheet-title">Ajuste / Redondeo</div><div style="padding:20px">
-    <p style="font-size:15px;line-height:1.8;margin-bottom:16px">Úsalo cuando el cliente no tiene cambio exacto o quieres redondear el total.</p>
-    <div style="background:var(--bg2);border-radius:10px;padding:14px;font-size:14px;margin-bottom:12px">
-      <strong>Ejemplo 1:</strong><br>Total = $73, cliente paga $75<br>→ Ajuste <strong style="color:var(--green)">+$2</strong>
-    </div>
-    <div style="background:var(--bg2);border-radius:10px;padding:14px;font-size:14px;margin-bottom:20px">
-      <strong>Ejemplo 2:</strong><br>Total = $73, prefieres cobrar $70<br>→ Ajuste <strong style="color:var(--red)">-$3</strong>
-    </div>
-    <button class="btn btn-primary btn-full btn-lg" onclick="closeSheet()">Entendido</button>
-  </div>`, true);
-}
-
-// ─── MERMA MOTIVOS POR PRODUCTO (igual que ERP) ───────────────
-const MERMA_GRUPOS_CHOFER = {
-  tortillas:['LUN10NAT','LUN10INT','LUN8BUR'],
-  mia:['MIA500NAT','MIA500INT','MIA500MAN','MIA500NOP','MIA1KNAT','MIA1KMAN'],
-  buñuelos:['10BUÑ'],
-  mazapanes:['ELIMAZAZU','ELIMAZSTE','ELIMAZSUF'],
-};
-const MERMA_MOTIVOS_CHOFER = {
-  tortillas:['Se caducó antes de tiempo','Caducidad expirada','Orillas rotas','Tortillas dobladas','Sello de empaque roto','Producto maltratado'],
-  mia:['Se caducó antes de tiempo','Caducidad expirada','Sello de empaque roto','Producto maltratado'],
-  buñuelos:['Producto maltratado','Sello de empaque roto'],
-  mazapanes:['Caducidad expirada'],
-};
-
-function getMermaMotivosChofer(sku){
-  const skuN=(sku||'').toUpperCase().trim();
-  for(const [grupo,skus] of Object.entries(MERMA_GRUPOS_CHOFER)){
-    if(skus.includes(skuN)) return [...(MERMA_MOTIVOS_CHOFER[grupo]||[]),'Otro'];
-  }
-  return ['Se caducó antes de tiempo','Caducidad expirada','Producto maltratado','Sello de empaque roto','Otro'];
-}
-
-function actualizarMotivosMerma(prodId){
-  const p=STATE.productos.find(x=>String(x.id)===String(prodId));
-  const motivos=getMermaMotivosChofer(p?.sku||'');
-  const sel=document.getElementById('mv-motivo');
-  if(!sel) return;
-  sel.innerHTML=motivos.map(m=>`<option value="${m}">${m}</option>`).join('');
-  const otroWrap=document.getElementById('mv-otro-wrap');
-  if(otroWrap) sel.onchange=()=>{ otroWrap.style.display=sel.value==='Otro'?'':'none'; };
-}
-
-// ─── PRINT FUNCTIONS ─────────────────────────────────────────
-async function imprimirPago(pago){
-  const lines=[
-    'ANAKEL DISTRIBUIDORA',
-    '================================',
-    'COMPROBANTE DE PAGO',
-    '--------------------------------',
-    `No: PAG-${pago.numero||pago.id}`,
-    `Fecha: ${new Date(pago.fecha||Date.now()).toLocaleDateString('es-MX')}`,
-    `Cliente: ${pago.clienteNombre||''}`,
-    '--------------------------------',
-    `Método: ${pago.metodo==='banco'?'Transferencia/Banco':'Efectivo'}`,
-    `MONTO:  MXN ${fmt(pago.monto||0)}`,
-    '================================',
-    '¡Gracias por su pago!'
-  ];
-  await printLines58(lines.join('\n'));
-}
-
-async function imprimirEstadoCuenta(clienteId, clienteNombre){
-  const c=STATE.clientes.find(x=>String(x.id)===String(clienteId));
-  const ventas=STATE.ventas.filter(v=>String(v.clienteId)===String(clienteId)&&v.tipo==='venta').slice(0,20);
-  const pagos=STATE.pagos.filter(p=>String(p.clienteId)===String(clienteId)).slice(0,20);
-  const txs=[
-    ...ventas.map(v=>({fecha:v.fecha,tipo:'V',num:v.numero,monto:v.total})),
-    ...pagos.map(p=>({fecha:p.fecha,tipo:'P',num:p.numero,monto:p.monto})),
-  ].sort((a,b)=>new Date(a.fecha||0)-new Date(b.fecha||0));
-  const lines=[
-    'ANAKEL DISTRIBUIDORA',
-    '================================',
-    'ESTADO DE CUENTA',
-    `${clienteNombre}`,
-    `Fecha: ${new Date().toLocaleDateString('es-MX')}`,
-    '--------------------------------',
-    ...txs.map(t=>`${t.tipo==='V'?'VTA':'PAG'} ${(t.num||'').padEnd(8)} $${fmt(t.monto)}`),
-    '--------------------------------',
-    `Saldo actual: MXN ${fmt(c?.saldo||0)}`,
-    `Límite cred:  MXN ${fmt(c?.limiteCredito||0)}`,
-    '================================',
-  ];
-  await printLines58(lines.join('\n'));
-}
-
-async function printLines58(text){
-  if(!navigator.bluetooth){ 
-    showToast('Bluetooth no disponible — copia el texto para compartir');
-    if(navigator.share) navigator.share({title:'Ticket Anakel',text});
-    return; 
-  }
-  try{
-    showToast('Buscando impresora...');
-    const device=await navigator.bluetooth.requestDevice({
-      filters:[{name:'PT-220'},{namePrefix:'Printer'},{namePrefix:'PT'}],
-      optionalServices:['000018f0-0000-1000-8000-00805f9b34fb']
-    });
-    const server=await device.gatt.connect();
-    const service=await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-    const char=await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-    await char.writeValue(new TextEncoder().encode(text+'\n\n\n'));
-    showToast('Impreso ✓');
-  }catch(e){ showToast('No se pudo conectar a la impresora'); }
-}
-
-// ─── DARK MODE ───────────────────────────────────────────────
-function initDarkMode(){
-  const dark = localStorage.getItem('anakel_dark')==='1';
-  if(dark) document.documentElement.classList.add('dark');
-  updateDarkIcons(dark);
-}
-function toggleDarkMode(){
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('anakel_dark', isDark?'1':'0');
-  updateDarkIcons(isDark);
-}
-function updateDarkIcons(isDark){
-  const sol = document.getElementById('icon-sol');
-  const luna = document.getElementById('icon-luna');
-  if(sol) sol.style.display = isDark ? 'none' : '';
-  if(luna) luna.style.display = isDark ? '' : 'none';
-}
-initDarkMode();
 initFirebase().catch(e=>console.warn('Firebase init error:',e));
 // Register service worker for PWA/offline support
 if('serviceWorker' in navigator){
