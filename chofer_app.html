@@ -70,6 +70,26 @@
   .dark .offline-banner { background: #6b4800; }
   .dark #sync-bar { background: #16161c; }
   .dark .search-input { background: var(--bg2); color: var(--text); }
+  .dark .month-nav-btn { background: var(--bg2); border-color: var(--border); color: var(--text); }
+  .dark .filter-tab { color: var(--text2); }
+  .dark .filter-tab.active { color: var(--accent); }
+  .dark .btn { background: var(--bg2); border-color: var(--border); color: var(--text); }
+  .dark .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .dark .btn-green { background: var(--green); color: white; }
+  .dark .btn-red { background: var(--red); color: white; }
+  .dark .pago-method { background: var(--bg2); border-color: var(--border); color: var(--text); }
+  .dark .pago-method.selected { border-color: var(--accent); background: var(--blue-bg); }
+  .dark .qty-btn { background: var(--bg2); border-color: var(--border); color: var(--text); }
+  .dark .list-item { background: var(--surface); }
+  .dark .list-item:active { background: var(--bg2); }
+  .dark .doc-item { background: var(--surface); }
+  .dark .doc-item:active { background: var(--bg2); }
+  .dark .sheet { background: var(--surface); }
+  .dark .form-input { background: var(--bg2); border-color: var(--border); color: var(--text); }
+  .dark .section-label { color: var(--text2); }
+  .dark .month-nav { background: var(--surface); border-bottom-color: var(--border); }
+  .dark .month-nav-label { color: var(--text); }
+  .dark .month-total { color: var(--text2); }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
 
@@ -565,6 +585,7 @@ const STATE = {
   notas: [],
   gastos: [],
   rutas: [],
+  inventarioCarro: [],
   currentVenta: null,
 };
 
@@ -657,6 +678,19 @@ async function loadAllData(){
     STATE.gastos = gastosSnap.docs.map(d=>({id:d.id,...d.data()}));
     // Also load rutas for client name display
     try{ const rutasSnap=await getDocs(collection(_db,'rutas')); STATE.rutas=rutasSnap.docs.map(d=>({id:d.id,...d.data()})); }catch{}
+    // Load inventario from active route (set by ERP)
+    try{
+      const cached=localStorage.getItem('anakel_inventario_carro');
+      if(cached) STATE.inventarioCarro=JSON.parse(cached);
+      // Also try from Firebase active routes
+      const rutasActivasSnap=await getDocs(collection(_db,'rutasActivas'));
+      const rutaActiva=rutasActivasSnap.docs.find(d=>{const r=d.data();return r.chofer&&STATE.user?.email&&r.email===STATE.user.email;});
+      if(rutaActiva){
+        const inv=rutaActiva.data()?.inventario||[];
+        STATE.inventarioCarro=inv;
+        localStorage.setItem('anakel_inventario_carro',JSON.stringify(inv));
+      }
+    }catch{}
     // Apply default credit limit logic
     aplicarLimiteCreditoDefault();
     cacheData();
@@ -968,6 +1002,16 @@ function removeItem(idx){ STATE.currentVenta.items.splice(idx,1); abrirFormVenta
 function editItemQty(idx,dir){
   const item=STATE.currentVenta.items[idx]; if(!item) return;
   const newQty=Math.max(0.01,(item.cantidad||1)+dir);
+  // Check stock if increasing
+  if(dir>0){
+    const inventario=STATE.inventarioCarro||[];
+    const inv=inventario.find(x=>String(x.id)===String(item.productoId)||String(x.productoId)===String(item.productoId));
+    if(inv){
+      const otrasEnVenta=(STATE.currentVenta?.items||[]).filter((it,i)=>i!==idx&&String(it.productoId)===String(item.productoId)).reduce((s,i)=>s+(i.cantidad||0),0);
+      const maxDisp=Math.max(0,(inv.cantidad||0)-otrasEnVenta);
+      if(newQty>maxDisp){ showToast('Máximo disponible: '+maxDisp+' unidades'); return; }
+    }
+  }
   STATE.currentVenta.items[idx]={...item,cantidad:newQty,total:newQty*(item.precio||0)};
   abrirFormVenta();
 }
@@ -1031,7 +1075,12 @@ function filterProds(q){
   const res = document.getElementById('prod-results'); if(!res) return;
   const prods = STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo'&&(!q||p.nombre?.toLowerCase().includes(q.toLowerCase())||p.sku?.toLowerCase().includes(q.toLowerCase()))).slice(0,20);
   if(!prods.length){ res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Sin resultados</div>'; return; }
-  res.innerHTML=prods.map(p=>`<div class="prod-result-item" onclick="seleccionarProducto('${p.id}')"><div class="prod-result-name">${esc(p.nombre||p.sku)}</div><div class="prod-result-price">MXN ${fmt(p.precio||0)} / ${p.unidad||'pza'}</div></div>`).join('');
+  res.innerHTML=prods.map(p=>{
+    const stock=getStockDisponible(p.id);
+    const stockBadge=stock===null?'':(stock<=0?'<span class="badge badge-red">Sin stock</span>':(stock<=3?`<span class="badge badge-amber">${stock} disp.</span>`:`<span class="badge badge-green">${stock} disp.</span>`));
+    const disabled=stock!==null&&stock<=0?' style="opacity:0.5;pointer-events:none"':'';
+    return `<div class="prod-result-item" onclick="seleccionarProducto('${p.id}')"${disabled}><div style="display:flex;justify-content:space-between;align-items:center"><div class="prod-result-name">${esc(p.nombre||p.sku)}</div>${stockBadge}</div><div class="prod-result-price">MXN ${fmt(p.precio||0)} / ${p.unidad||'pza'}</div></div>`;
+  }).join('');
 }
 
 function seleccionarProducto(prodId){
@@ -1053,10 +1102,39 @@ function seleccionarProducto(prodId){
 
 function adjQty(d){ const inp=document.getElementById('prod-qty'); if(inp) inp.value=Math.max(0.01,(parseFloat(inp.value)||0)+d); }
 
+function getStockDisponible(prodId){
+  // Get stock from inventario carro (set by ERP when route starts)
+  // Falls back to unlimited if no inventory data
+  const inventario = STATE.inventarioCarro||[];
+  const item = inventario.find(x=>String(x.id)===String(prodId)||String(x.productoId)===String(prodId));
+  if(!item) return null; // null = no inventory control
+  // Subtract what's already in the current venta
+  const yaEnVenta = (STATE.currentVenta?.items||[])
+    .filter(i=>String(i.productoId)===String(prodId))
+    .reduce((s,i)=>s+(i.cantidad||0),0);
+  return Math.max(0,(item.cantidad||0)-yaEnVenta);
+}
+
 function addProducto(prodId){
   const p=STATE.productos.find(x=>String(x.id)===String(prodId)); if(!p) return;
-  const qty=parseFloat(document.getElementById('prod-qty')?.value)||1;
+  let qty=parseFloat(document.getElementById('prod-qty')?.value)||1;
   const price=parseFloat(document.getElementById('prod-price')?.value)||p.precio||0;
+  
+  // Check available stock
+  const stock = getStockDisponible(prodId);
+  if(stock!==null){
+    if(stock<=0){
+      showToast('Sin stock disponible de '+p.nombre+' en el carro');
+      closeSheet();
+      setTimeout(abrirFormVenta,100);
+      return;
+    }
+    if(qty>stock){
+      showToast('Solo hay '+stock+' unidades de '+p.nombre+'. Se ajustó la cantidad.');
+      qty=stock;
+    }
+  }
+  
   const total=qty*price;
   STATE.currentVenta.items.push({productoId:p.id,nombre:p.nombre||p.sku,sku:p.sku,cantidad:qty,precio:price,iva:p.iva,ieps:p.ieps,total});
   closeSheet();
