@@ -323,7 +323,7 @@
   <div class="login-logo">🛵</div>
   <div class="login-title">Anakel</div>
   <div class="login-sub">Sistema de distribución</div>
-  <input class="login-field" id="login-email" type="email" placeholder="Correo electrónico" autocomplete="email">
+  <input class="login-field" id="login-email" type="text" placeholder="Usuario o correo electrónico" autocomplete="username" inputmode="email">
   <input class="login-field" id="login-pass" type="password" placeholder="Contraseña" autocomplete="current-password">
   <button class="login-btn" onclick="doLogin()">Entrar</button>
   <div class="login-error" id="login-error"></div>
@@ -615,6 +615,34 @@ async function initFirebase(){
     loadCachedData();
   }
 
+  // Check for username-based session first
+  const savedSession = localStorage.getItem('anakel_session');
+  if(savedSession){
+    try{
+      const sess = JSON.parse(savedSession);
+      // Session valid for 7 days
+      if(sess.ts && Date.now() - sess.ts < 7*24*60*60*1000){
+        STATE.user = {
+          email: sess.username + '@anakel.local',
+          username: sess.username,
+          nombre: sess.nombre,
+          uid: sess.uid,
+          rol: sess.rol,
+          permisos: sess.permisos || {},
+          loginType: 'username'
+        };
+        STATE._permisos = sess.permisos || {};
+        STATE._userRol = sess.rol || 'chofer';
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('topbar-user').textContent = sess.nombre || sess.username;
+        document.getElementById('topbar-sub').textContent = sess.rol || 'chofer';
+        loadAllData().then(()=>renderVentas()).catch(()=>{});
+      } else {
+        localStorage.removeItem('anakel_session');
+      }
+    }catch(e){ localStorage.removeItem('anakel_session'); }
+  }
+
   onAuthStateChanged(_auth, user => {
     if(user){
       STATE.user = user;
@@ -704,22 +732,124 @@ async function processQueue(){
 }
 
 // ─── Auth ───────────────────────────────────────────────────
-function doLogin(){
-  const email = document.getElementById('login-email').value.trim();
+async function doLogin(){
+  const input = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('login-error');
   err.textContent = '';
-  if(!email||!pass){ err.textContent='Ingresa correo y contraseña'; return; }
-  if(!_auth){ err.textContent='Cargando... intenta en un momento'; return; }
-  _auth.signInWithEmailAndPassword
-    ? _auth.signInWithEmailAndPassword(email, pass).catch(e=>{ err.textContent='Correo o contraseña incorrectos'; })
-    : import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({signInWithEmailAndPassword})=>{
-        signInWithEmailAndPassword(_auth, email, pass).catch(e=>{ err.textContent='Correo o contraseña incorrectos'; });
-      });
+  const btn = document.querySelector('.login-btn');
+
+  if(!input||!pass){ err.textContent='Ingresa usuario/correo y contraseña'; return; }
+
+  btn.textContent = 'Entrando...'; btn.disabled = true;
+
+  const isEmail = input.includes('@');
+
+  // ── Username login (no @) → always use usuarios_app ─────────────────
+  if(!isEmail){
+    // Wait for Firebase to initialize if needed
+    let attempts = 0;
+    while(!_db && attempts < 20){ await new Promise(r=>setTimeout(r,300)); attempts++; }
+    if(!_db){
+      err.textContent = 'Sin conexión a internet. Verifica tu red e intenta de nuevo.';
+      btn.textContent = 'Entrar'; btn.disabled = false;
+      return;
+    }
+    try{
+      const { collection, getDocs } = _fbFs;
+      const snap = await getDocs(collection(_db, 'usuarios_app'));
+      const usuarios = snap.docs.map(d=>d.data());
+      console.log('[Login] usuarios_app encontrados:', usuarios.length, 'buscando:', input);
+
+      const usuario = usuarios.find(u=> u.username === input && u.activo !== false);
+
+      if(!usuario){
+        // Try case-insensitive
+        const usuarioCI = usuarios.find(u=> (u.username||'').toLowerCase() === input.toLowerCase() && u.activo !== false);
+        if(usuarioCI){
+          err.textContent = 'Usuario incorrecto. ¿Quisiste decir "'+usuarioCI.username+'"?';
+        } else {
+          err.textContent = 'Usuario "'+input+'" no encontrado. Verifica con tu supervisor.';
+        }
+        btn.textContent = 'Entrar'; btn.disabled = false;
+        return;
+      }
+
+      // Validate password — try both btoa and direct comparison
+      const passHash = btoa(unescape(encodeURIComponent(pass)));
+      const passHashSimple = btoa(pass);
+      const valid = usuario.passwordHash === passHash || usuario.passwordHash === passHashSimple;
+      console.log('[Login] passHash generado:', passHashSimple, 'guardado:', usuario.passwordHash, 'valid:', valid);
+
+      if(!valid){
+        err.textContent = 'Contraseña incorrecta. Verifica con tu supervisor.';
+        btn.textContent = 'Entrar'; btn.disabled = false;
+        return;
+      }
+
+      // ✓ Login exitoso
+      const session = {
+        username: usuario.username,
+        uid: usuario.id,
+        nombre: usuario.nombre,
+        rol: usuario.rol || 'chofer',
+        permisos: usuario.permisos || {},
+        ts: Date.now()
+      };
+      localStorage.setItem('anakel_session', JSON.stringify(session));
+      STATE.user = {
+        email: usuario.email || input+'@anakel.local',
+        username: usuario.username,
+        nombre: usuario.nombre,
+        uid: usuario.id,
+        rol: usuario.rol||'chofer',
+        permisos: usuario.permisos||{},
+        loginType: 'username'
+      };
+      STATE._permisos = usuario.permisos||{};
+      STATE._userRol = usuario.rol||'chofer';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('topbar-user').textContent = usuario.nombre||usuario.username;
+      document.getElementById('topbar-sub').textContent = usuario.rol||'chofer';
+      btn.textContent = 'Entrar'; btn.disabled = false;
+      await loadAllData();
+      renderVentas();
+      return;
+
+    }catch(e){
+      console.error('[Login] Error Firestore:', e);
+      err.textContent = 'Error de conexión: '+e.message+'. Intenta de nuevo.';
+      btn.textContent = 'Entrar'; btn.disabled = false;
+      return; // Don't fall through — username login should NEVER use Firebase Auth
+    }
+  }
+
+  // ── Email login → Firebase Auth ───────────────────────────────────────
+  while(!_auth && attempts < 20){ await new Promise(r=>setTimeout(r,300)); }
+  if(!_auth){ err.textContent='Servicio no disponible'; btn.textContent='Entrar'; btn.disabled=false; return; }
+  try{
+    const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    await signInWithEmailAndPassword(_auth, input, pass);
+    btn.textContent = 'Entrar'; btn.disabled = false;
+  }catch(e){
+    err.textContent = 'Correo o contraseña incorrectos';
+    btn.textContent = 'Entrar'; btn.disabled = false;
+  }
 }
 
 function doLogout(){
   if(!confirm('¿Cerrar sesión?')) return;
+  // Clear username session if present
+  if(STATE.user?.loginType === 'username'){
+    localStorage.removeItem('anakel_session');
+    STATE.user = null;
+    STATE._permisos = {};
+    STATE._userRol = null;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-pass').value = '';
+    return;
+  }
   import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({signOut})=>signOut(_auth));
 }
 
