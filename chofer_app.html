@@ -634,9 +634,10 @@ async function initFirebase(){
         STATE._permisos = sess.permisos || {};
         STATE._userRol = sess.rol || 'chofer';
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('topbar-user').textContent = sess.nombre || sess.username;
+        document.getElementById('app').style.display = 'flex';
+        document.getElementById('topbar-title').textContent = sess.nombre || sess.username;
         document.getElementById('topbar-sub').textContent = sess.rol || 'chofer';
-        loadAllData().then(()=>renderVentas()).catch(()=>{});
+        loadAllData().then(()=>{ try{renderVentas();}catch(e){} }).catch(()=>{});
       } else {
         localStorage.removeItem('anakel_session');
       }
@@ -650,7 +651,6 @@ async function initFirebase(){
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       document.getElementById('topbar-sub').textContent = user.email;
-      cargarPermisosUsuarioApp(user.email);
       // Show active route info
       mostrarRutaActivaTopbar();
       loadAllData().then(()=>{
@@ -808,12 +808,19 @@ async function doLogin(){
       };
       STATE._permisos = usuario.permisos||{};
       STATE._userRol = usuario.rol||'chofer';
+      // Show app, hide login
       document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('topbar-user').textContent = usuario.nombre||usuario.username;
+      document.getElementById('app').style.display = 'flex';
+      document.getElementById('topbar-title').textContent = usuario.nombre||usuario.username;
       document.getElementById('topbar-sub').textContent = usuario.rol||'chofer';
       btn.textContent = 'Entrar'; btn.disabled = false;
-      await loadAllData();
-      renderVentas();
+      // Load data and render
+      try{
+        await loadAllData();
+      }catch(e){ console.warn('loadAllData error:', e.message); }
+      try{
+        renderVentas();
+      }catch(e){ console.warn('renderVentas error:', e.message); }
       return;
 
     }catch(e){
