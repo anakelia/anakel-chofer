@@ -402,6 +402,9 @@
         <div class="month-total" id="pagos-total">MXN 0.00</div>
         <button class="month-nav-btn" onclick="changePeriodPagos(1)">&#8250;</button>
       </div>
+      <div class="search-wrap">
+        <input class="search-input" id="pagos-search" placeholder="Buscar por cliente..." oninput="renderPagos()">
+      </div>
       <div id="pagos-list" style="background:var(--surface)"></div>
       <div style="height:80px"></div>
       <button class="fab" onclick="nuevoPago()">+</button>
@@ -419,9 +422,18 @@
 
     <!-- COTIZAR PAGE -->
     <div id="page-cotizar" class="page">
-      <div class="filter-tabs">
-        <button class="filter-tab active" onclick="setCotizarTab('cotizaciones',this)">Cotizaciones</button>
-        <button class="filter-tab" onclick="setCotizarTab('pedidos',this)">Pedidos de venta</button>
+      <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Cotizaciones</div>
+        <div class="month-nav" style="margin-bottom:8px">
+          <button class="month-nav-btn" onclick="changePeriodCotizar(-1)">&#8249;</button>
+          <div>
+            <button onclick="abrirSelectorPeriodo('cotizar')" class="btn btn-sm" style="font-size:12px;padding:4px 10px" id="cotizar-period-tipo-btn">Mensual</button>
+            <div class="month-nav-label" id="cotizar-period-label" style="font-size:13px"></div>
+          </div>
+          <div class="month-total" id="cotizar-total">MXN 0.00</div>
+          <button class="month-nav-btn" onclick="changePeriodCotizar(1)">&#8250;</button>
+        </div>
+        <input class="search-input" id="cotizar-search" placeholder="Buscar por cliente o número..." oninput="renderCotizar()" style="margin:0">
       </div>
       <div id="cotizar-list" style="background:var(--surface)"></div>
       <div style="height:80px"></div>
@@ -444,9 +456,12 @@
 
     <!-- PRODUCTOS PAGE -->
     <div id="page-productos" class="page">
-      <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
-        <input class="search-input" id="prod-inv-search" placeholder="Buscar producto..." oninput="renderProductos()" style="flex:1">
-        <button onclick="abrirFiltroCategorias()" id="btn-filtro-cats" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Cat. ▾</button>
+      <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Inventario</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="search-input" id="prod-inv-search" placeholder="Buscar producto..." oninput="renderProductos()" style="flex:1;margin:0">
+          <button onclick="abrirFiltroCategorias()" id="btn-filtro-cats" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Cat. ▾</button>
+        </div>
       </div>
       <div id="prod-filtro-activo" style="display:none;padding:6px 16px;background:var(--blue-bg);font-size:12px;color:var(--blue);border-bottom:1px solid var(--border)"></div>
       <div id="productos-list"></div>
@@ -491,8 +506,18 @@
 
   <!-- Page: Pedidos -->
   <div id="page-pedidos" class="page">
-    <div class="search-wrap">
-      <input class="search-input" id="pedidos-search" placeholder="Buscar pedido o cliente..." oninput="renderPedidosPage()">
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Pedidos de venta</div>
+      <div class="month-nav" style="margin-bottom:8px">
+        <button class="month-nav-btn" onclick="changePeriodPedidos(-1)">&#8249;</button>
+        <div>
+          <button onclick="abrirSelectorPeriodo('pedidos')" class="btn btn-sm" style="font-size:12px;padding:4px 10px" id="pedidos-period-tipo-btn">Mensual</button>
+          <div class="month-nav-label" id="pedidos-period-label" style="font-size:13px"></div>
+        </div>
+        <div class="month-total" id="pedidos-total">MXN 0.00</div>
+        <button class="month-nav-btn" onclick="changePeriodPedidos(1)">&#8250;</button>
+      </div>
+      <input class="search-input" id="pedidos-search" placeholder="Buscar por cliente o número..." oninput="renderPedidosPage()" style="margin:0">
     </div>
     <div id="pedidos-list"></div>
     <div style="height:80px"></div>
@@ -501,6 +526,18 @@
 
   <!-- Page: Rutas pasadas -->
   <div id="page-rutas_pasadas" class="page">
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Mis rutas pasadas</div>
+      <div class="month-nav">
+        <button class="month-nav-btn" onclick="changePeriodRutas(-1)">&#8249;</button>
+        <div>
+          <button onclick="abrirSelectorPeriodo('rutas')" class="btn btn-sm" style="font-size:12px;padding:4px 10px" id="rutas-period-tipo-btn">Mensual</button>
+          <div class="month-nav-label" id="rutas-period-label" style="font-size:13px"></div>
+        </div>
+        <div class="month-total" id="rutas-total"></div>
+        <button class="month-nav-btn" onclick="changePeriodRutas(1)">&#8250;</button>
+      </div>
+    </div>
     <div id="rutas-pasadas-content" style="padding:16px"></div>
   </div>
 
@@ -792,6 +829,87 @@ function closeDrawer(){
   document.getElementById('side-drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
 }
+// ── Period navigation for drawer modules ────────────────────
+const _modulePeriods = {};
+
+function getModulePeriod(mod){
+  if(!_modulePeriods[mod]){
+    const now = new Date();
+    const y=now.getFullYear(), m=now.getMonth();
+    _modulePeriods[mod] = {
+      tipo:'mensual',
+      from: new Date(y,m,1).toISOString().slice(0,10),
+      to: new Date(y,m+1,0).toISOString().slice(0,10)
+    };
+  }
+  return _modulePeriods[mod];
+}
+
+function setModulePeriodo(mod, tipo){
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth();
+  const iso=d=>d.toISOString().slice(0,10);
+  const p=_modulePeriods[mod]||{};
+  if(tipo==='dia'){p.from=p.to=iso(now);}
+  else if(tipo==='semana'){
+    const day=(now.getDay()+6)%7;
+    const mon=new Date(now);mon.setDate(now.getDate()-day);
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    p.from=iso(mon);p.to=iso(sun);
+  }
+  else if(tipo==='mensual'){p.from=iso(new Date(y,m,1));p.to=iso(new Date(y,m+1,0));}
+  else if(tipo==='anual'){p.from=iso(new Date(y,0,1));p.to=iso(new Date(y,11,31));}
+  p.tipo=tipo;
+  _modulePeriods[mod]=p;
+}
+
+function moveModulePeriod(mod, dir){
+  const p=getModulePeriod(mod);
+  const from=new Date(p.from+'T00:00:00');
+  const to=new Date(p.to+'T00:00:00');
+  const iso=d=>d.toISOString().slice(0,10);
+  const span=Math.round((to-from)/86400000)+1;
+  if(p.tipo==='mensual'){
+    const d=new Date(from.getFullYear(),from.getMonth()+dir,1);
+    p.from=iso(d);p.to=iso(new Date(d.getFullYear(),d.getMonth()+1,0));
+  } else if(p.tipo==='anual'){
+    p.from=iso(new Date(from.getFullYear()+dir,0,1));
+    p.to=iso(new Date(from.getFullYear()+dir,11,31));
+  } else {
+    from.setDate(from.getDate()+dir*span);
+    to.setDate(to.getDate()+dir*span);
+    p.from=iso(from);p.to=iso(to);
+  }
+  _modulePeriods[mod]=p;
+}
+
+function updateModulePeriodUI(mod, totalLabel=''){
+  const p=getModulePeriod(mod);
+  const btn=document.getElementById(mod+'-period-tipo-btn');
+  const lbl=document.getElementById(mod+'-period-label');
+  const tot=document.getElementById(mod+'-total');
+  if(btn) btn.textContent={dia:'Diario',semana:'Semanal',mensual:'Mensual',anual:'Anual',personalizado:'Personalizado'}[p.tipo]||'Mensual';
+  if(lbl){
+    if(p.tipo==='mensual'){
+      const d=new Date(p.from+'T00:00:00');
+      lbl.textContent=d.toLocaleDateString('es-MX',{month:'short',year:'numeric'});
+    } else {
+      lbl.textContent=p.from+(p.from!==p.to?' – '+p.to:'');
+    }
+  }
+  if(tot&&totalLabel) tot.textContent=totalLabel;
+}
+
+function changePeriodCotizar(dir){ moveModulePeriod('cotizar',dir); renderCotizar(); }
+function changePeriodPedidos(dir){ moveModulePeriod('pedidos',dir); renderPedidosPage(); }
+function changePeriodRutas(dir){ moveModulePeriod('rutas',dir); renderRutasPasadas(); }
+
+// Hook abrirSelectorPeriodo to support new modules
+const _origAbrirSelector = typeof abrirSelectorPeriodo !== 'undefined' ? abrirSelectorPeriodo : null;
+
+// ── Override renderPagos to support search ────────────────────
+const _origRenderPagos = window.renderPagos;
+
 // Check permission for current user
 function puedoHacer(modulo, accion){
   // Admins and supervisors can do everything
@@ -821,7 +939,16 @@ function navDrawer(page){
 function renderPedidosPage(){
   const list = document.getElementById('pedidos-list'); if(!list) return;
   const q = document.getElementById('pedidos-search')?.value.toLowerCase()||'';
-  const docs = (STATE.ventas||[]).filter(v=>v.tipo==='pedido'&&(!q||(v.clienteNombre||'').toLowerCase().includes(q)||(v.numero||'').toLowerCase().includes(q)));
+  const p=getModulePeriod('pedidos');
+  const desde=new Date(p.from+'T00:00:00'), hasta=new Date(p.to+'T23:59:59');
+  const docs = (STATE.ventas||[]).filter(v=>{
+    if(v.tipo!=='pedido') return false;
+    const d=new Date(v.fecha||Date.now()); if(d<desde||d>hasta) return false;
+    if(q&&!(v.clienteNombre||'').toLowerCase().includes(q)&&!(v.numero||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const total=docs.reduce((s,v)=>s+(v.total||0),0);
+  updateModulePeriodUI('pedidos','MXN '+fmt(total));
   if(!docs.length){list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin pedidos de venta</div>';return;}
   list.innerHTML = docs.slice().reverse().map(v=>{
     const saldo=Math.max(0,(v.total||0)-(v.pagado||0));
@@ -855,6 +982,12 @@ function renderRutasPasadas(){
   // Load from Firebase fb_historial or local cache
   const historial = STATE._rutasPasadas||[];
 
+  const p=getModulePeriod('rutas');
+  updateModulePeriodUI('rutas');
+  const desde=new Date((p.from||'2000-01-01')+'T00:00:00');
+  const hasta=new Date((p.to||'2099-12-31')+'T23:59:59');
+  const histFiltrado=historial.filter(h=>{const d=new Date((h.fecha||'')+'T00:00:00');return d>=desde&&d<=hasta;});
+
   if(!historial.length){
     cont.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3)">
       <div style="font-size:48px;margin-bottom:12px">📋</div>
@@ -866,21 +999,22 @@ function renderRutasPasadas(){
     return;
   }
 
-  const totalVentas = historial.reduce((s,h)=>s+(h.cierre?.ventasSistema||h.pagos||0),0);
-  const totalCobros = historial.reduce((s,h)=>s+(h.pagos||0),0);
+  const totalVentas = histFiltrado.reduce((s,h)=>s+(h.cierre?.ventasSistema||h.pagos||0),0);
+  const totalCobros = histFiltrado.reduce((s,h)=>s+(h.pagos||0),0);
+  updateModulePeriodUI('rutas', histFiltrado.length+' rutas');
 
   cont.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Total rutas</div>
-        <div style="font-size:24px;font-weight:700">${historial.length}</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Rutas en período</div>
+        <div style="font-size:24px;font-weight:700">${histFiltrado.length}</div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Total cobrado</div>
         <div style="font-size:24px;font-weight:700;color:var(--green)">$${fmt(totalCobros)}</div>
       </div>
     </div>
-    ${historial.slice().reverse().map(h=>{
+    ${histFiltrado.slice().reverse().map(h=>{
       const ventas=h.cierre?.ventasSistema||h.pagos||0;
       const cobros=h.pagos||0;
       const gastos=(h.cierre?.gg||0)+(h.cierre?.gm||0)+(h.cierre?.gf||0);
