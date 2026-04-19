@@ -498,10 +498,22 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
       Inventario
     </div>
+    <div class="drawer-item" onclick="navDrawer('mi_ruta')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Mi ruta de hoy
+    </div>
     <div class="drawer-item" onclick="navDrawer('rutas_pasadas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><polyline points="12 8 12 12 14 14"/><path d="M3.05 11H7M17 11h3.95M12 3.05V7M12 17v3.95"/></svg>
       Rutas pasadas
     </div>
+  </div>
+
+  <!-- Page: Mi ruta -->
+  <div id="page-mi_ruta" class="page">
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
+      <div style="font-size:16px;font-weight:700;color:var(--text)">Mi ruta de hoy</div>
+    </div>
+    <div id="mi-ruta-content" style="padding:16px"></div>
   </div>
 
   <!-- Page: Pedidos -->
@@ -966,6 +978,74 @@ function closeDrawer(){
   document.getElementById('side-drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
 }
+// ── Mi ruta de hoy ───────────────────────────────────────────
+function renderMiRuta(){
+  const cont = document.getElementById('mi-ruta-content'); if(!cont) return;
+  const ruta = STATE._rutaActivaNombre||null;
+  if(!ruta){
+    cont.innerHTML=`<div style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:12px">🗺️</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px">Sin ruta activa</div>
+      <div style="color:var(--text3);font-size:13px">El supervisor debe iniciar tu ruta desde el sistema principal.</div>
+    </div>`;
+    return;
+  }
+  const aperturaLocal = STATE._aperturaActiva||{};
+  const clientes = aperturaLocal.clientes||[];
+  const inventario = aperturaLocal.inventario||STATE._inventarioRuta||[];
+  const di = aperturaLocal.di||STATE._rutaActiva?.di||0;
+  const fechaInicio = aperturaLocal.fecha||new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long'});
+  const ventasHoy=(STATE.ventas||[]).filter(v=>v.tipo==='venta');
+  const pagosHoy=(STATE.pagos||[]);
+  const totalVendido=ventasHoy.reduce((s,v)=>s+(v.total||0),0);
+  const totalCobrado=pagosHoy.reduce((s,p)=>s+(p.monto||0),0);
+  cont.innerHTML=`
+    <div style="background:var(--accent);color:white;border-radius:12px;padding:16px;margin-bottom:16px">
+      <div style="font-size:11px;opacity:.8;margin-bottom:4px">RUTA ACTIVA</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:2px">${esc(ruta)}</div>
+      <div style="font-size:12px;opacity:.8">${fechaInicio}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Clientes en ruta</div>
+        <div style="font-size:28px;font-weight:700">${clientes.length||'—'}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Dinero inicial</div>
+        <div style="font-size:22px;font-weight:700">$${fmt(di)}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Vendido hoy</div>
+        <div style="font-size:22px;font-weight:700;color:var(--accent)">$${fmt(totalVendido)}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Cobrado hoy</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">$${fmt(totalCobrado)}</div>
+      </div>
+    </div>
+    ${inventario.filter(i=>i.cantidad>0).length?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">INVENTARIO EN CARRO</div>
+      ${inventario.filter(i=>i.cantidad>0).map(i=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${esc(i.nombre||i.sku||'')}</span><span style="font-weight:600">${i.cantidad} pzas</span></div>`).join('')}
+    </div>`:``}
+    ${clientes.length?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">CLIENTES EN RUTA (${clientes.length})</div>
+      ${clientes.slice(0,5).map(cl=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${esc(cl.nombre||cl.clienteNombre||'')}</span><span style="color:var(--text2);font-size:11px">$${fmt(cl.saldo||0)}</span></div>`).join('')}
+      ${clientes.length>5?`<div style="font-size:11px;color:var(--text3);padding-top:6px">y ${clientes.length-5} más...</div>`:``}
+    </div>`:``}`;
+}
+
+// ── Scope filter ──────────────────────────────────────────────
+function filtrarPorScope(items, campoUsuario){
+  const scope = STATE.user?.scope||'propios';
+  if(scope==='todos'||STATE._userRol==='supervisor'||STATE._userRol==='admin') return items;
+  const myEmail=STATE.user?.email||'';
+  const myUsername=STATE.user?.username||'';
+  return items.filter(item=>{
+    const autor=item[campoUsuario]||item.creadoPor||item.email||'';
+    return autor===myEmail||autor===myUsername||(myUsername&&autor.includes(myUsername));
+  });
+}
+
 // ── Period navigation for drawer modules ────────────────────
 const _modulePeriods = {};
 
@@ -1065,6 +1145,10 @@ function navDrawer(page){
     return;
   }
   // For pedidos - show pedidos page
+  if(page==='mi_ruta'){
+    navTo('mi_ruta', null);
+    return;
+  }
   if(page==='pedidos'){
     navTo('pedidos', null);
     return;
@@ -1237,6 +1321,7 @@ function renderCurrentPage(){
   else if(p==='clientes') renderClientes();
   else if(p==='cotizar') renderCotizar();
   else if(p==='pedidos') renderPedidosPage();
+  else if(p==='mi_ruta'){ renderMiRuta(); }
   else if(p==='rutas_pasadas'){ renderRutasPasadas(); }
   else if(p==='nc') renderNC();
   else if(p==='gastos') renderGastos();
