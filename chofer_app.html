@@ -591,6 +591,54 @@
 </div>
 
 <script>
+// ── Empresa info y logo ─────────────────────────────────────────────
+const ANAKEL_LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAKAAoADASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAYHAQQFAwII/8QAQxAAAgEDAQQGCQMCBAUDBQAAAAECAwQFEQYhMUEHElFhgZETFCIycaGxwdEjQlIVciQzYuE0gpLC8ENT8VVjc6LS/8QAGgEBAAMBAQEAAAAAAAAAAAAAAAMEBQIGAf/EAC8RAQACAgEDAwIEBgMBAAAAAAABAgMRBBIhMQUTQSJRFDJCsRVhcYGRoSNSweH/2gAMAwEAAhEDEQA/APxkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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";
+const ANAKEL_TEL = "+52 56 3187 8320";
+const ANAKEL_DIR = "Akil 24, Popular Santa Teresa, Tlalpan, CDMX";
+
+// ── PDF header (logo + empresa info) ─────────────────────────────────
+function pdfHeaderHTML(docNum, fecha){
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1a1a2e">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img src="${ANAKEL_LOGO}" style="height:52px;width:52px;border-radius:8px;object-fit:cover;background:#000" alt="Anakel">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#1a1a2e">Anakel Distribuidora</div>
+        <div style="font-size:11px;color:#888">${ANAKEL_DIR}</div>
+        <div style="font-size:11px;color:#888">${ANAKEL_TEL}</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      ${docNum?`<div style="font-size:20px;font-weight:700;color:#2980d9">${docNum}</div>`:""}
+      ${fecha?`<div style="font-size:12px;color:#888">${fecha}</div>`:""}
+    </div>
+  </div>`;
+}
+
+// ── PDF base CSS ──────────────────────────────────────────────────────
+const PDF_BASE_CSS = `
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Arial,sans-serif;font-size:13px;color:#1a1a1a;padding:32px;max-width:700px;margin:0 auto}
+  .detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ee;font-size:13px}
+  .footer{margin-top:32px;text-align:center;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:12px}
+  @media print{body{padding:16px}}
+`;
+
+// ── Ticket 58mm header (texto plano para ESC/POS) ─────────────────────
+function ticketHeader58(extra){
+  const now=new Date();
+  const fecha=now.toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const hora=now.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
+  return [
+    "================================",
+    "   ANAKEL DISTRIBUIDORA",
+    "   +52 56 3187 8320",
+    "================================",
+    `Fecha: ${fecha}  Hora: ${hora}`,
+    ...(extra||[])
+  ];
+}
+
+
 // ─── Firebase imports via dynamic import ────────────────────
 let _db, _auth, _fbFs;
 
@@ -736,6 +784,7 @@ async function processQueue(){
       const { collection, doc, setDoc, addDoc } = _fbFs;
       if(op.type==='set') await setDoc(doc(_db, op.col, op.id), op.data, {merge:true});
       else if(op.type==='add') await addDoc(collection(_db, op.col), op.data);
+      else if(op.type==='delete'){ const {deleteDoc}=await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'); await deleteDoc(doc(_db, op.col, op.id)); }
     }catch(e){ remaining.push(op); }
   }
   saveQueue(remaining);
@@ -986,7 +1035,7 @@ function renderMiRuta(){
     cont.innerHTML=`<div style="text-align:center;padding:40px">
       <div style="font-size:48px;margin-bottom:12px">🗺️</div>
       <div style="font-size:16px;font-weight:600;margin-bottom:8px">Sin ruta activa</div>
-      <div style="color:var(--text3);font-size:13px">El supervisor debe iniciar tu ruta desde el sistema principal.</div>
+      <div style="color:var(--text3);font-size:13px">No hay rutas activas. El supervisor debe iniciar tu ruta desde el sistema principal.</div>
     </div>`;
     return;
   }
@@ -1578,7 +1627,10 @@ function abrirFormVenta(){
       ${(v.mermas||[]).map(m=>`<div>Merma: ${esc(m.nombre)} ×${m.cantidad} — ${esc(m.motivo)} (-MXN ${fmt(m.monto)})</div>`).join('')}
       ${(v.devoluciones||[]).map(d=>`<div>Dev: ${esc(d.nombre)} ×${d.cantidad} — ${esc(d.motivo)} (-MXN ${fmt(d.monto)})</div>`).join('')}
     </div>`:''}
-    ${v.id?`<div style="padding:0 16px 16px"><button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="solicitarEliminar('${v.id}')">Solicitar eliminación</button></div>`:''}
+    ${v.id?`<div style="padding:0 16px 16px">${puedoHacer('ventas','editar')
+      ? `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="eliminarVentaDirecto('${v.id}')">🗑 Eliminar venta</button>`
+      : `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="solicitarEliminar('${v.id}')">Solicitar eliminación</button>`
+    }</div>`:''}
     <div class="action-bar">
       <button class="btn" onclick="closeSheet()">Cancelar</button>
       <button class="btn" onclick="imprimirTicket58(STATE.currentVenta)" title="Ticket 58mm">🖨</button>
@@ -1877,6 +1929,16 @@ async function compartirVenta(){
   else showToast('Compartir no disponible en este dispositivo');
 }
 
+function eliminarVentaDirecto(id){
+  if(!confirm('¿Eliminar esta venta definitivamente? Esta acción no se puede deshacer.')) return;
+  STATE.ventas = (STATE.ventas||[]).filter(v=>v.id!==id);
+  // Queue deletion to Firebase
+  addToQueue({type:'delete',col:'ventas',id});
+  closeSheet();
+  showToast('Venta eliminada');
+  renderVentas();
+}
+
 async function solicitarEliminar(id){
   const motivo=prompt('Motivo para solicitar eliminación:');
   if(!motivo) return;
@@ -1891,18 +1953,10 @@ function generateTicketText(v,totales){
 }
 
 async function printTicket58(v){
-  if(!navigator.bluetooth){ showToast('Bluetooth no disponible'); return; }
-  try{
-    showToast('Buscando impresora...');
-    const device=await navigator.bluetooth.requestDevice({filters:[{name:'PT-220'},{namePrefix:'Printer'}],optionalServices:['000018f0-0000-1000-8000-00805f9b34fb']});
-    const server=await device.gatt.connect();
-    const service=await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-    const char=await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-    const totales=calcTotales();
-    const text=generateTicketText(v,totales);
-    await char.writeValue(new TextEncoder().encode(text+'\n\n\n'));
-    showToast('Ticket enviado ✓');
-  }catch(e){ showToast('No se pudo conectar a la impresora'); }
+  // Use imprimirTicket58 for visual popup or printLines58 for direct BT
+  const totales=calcTotales();
+  const text=generateTicketText(v,totales);
+  await printLines58(text);
 }
 
 // ─── PAGOS ──────────────────────────────────────────────────
@@ -2190,7 +2244,7 @@ function renderNC(){
   list.innerHTML=notas.map(n=>{
     const dt=fmtDateShort(n.fecha);
     const enlace=n.ventaEnlaceNum?`<button onclick="event.stopPropagation();abrirVentaPorNumero('${esc(n.ventaEnlaceNum)}')" style="background:none;border:none;color:var(--blue);font-size:10px;cursor:pointer;padding:0;text-decoration:underline"> → ${esc(n.ventaEnlaceNum)}</button>`:'';
-    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(n.numero||'')} <span class="badge badge-red">${STATE.ncTab==='devolucion'?'Devolución':'Merma'}</span>${enlace}</div><div class="doc-client">${esc(n.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-red">(-) MXN ${fmt(n.monto)}</div></div></div>`;
+    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(n.numero||'')} <span class="badge badge-red">${STATE.ncTab==='devolucion'?'Devolución':'Merma'}</span>${enlace}</div><div class="doc-client">${esc(n.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-red">(-) MXN ${fmt(n.monto)}</div><div style="display:flex;gap:4px;margin-top:4px"><button onclick="event.stopPropagation();imprimirTicketNC(${JSON.stringify(n).replace(/\"/g,'&quot;')})" class="btn btn-sm" style="font-size:11px">🖨</button><button onclick="event.stopPropagation();generarPDFNC(${JSON.stringify(n).replace(/\"/g,'&quot;')})" class="btn btn-sm" style="font-size:11px">📄</button></div></div></div>`;
   }).join('');
 }
 
@@ -2710,7 +2764,7 @@ function renderProductos(){
   let html='<div style="background:var(--surface)">';
   if(!tieneInventario){
     html+=`<div style="padding:10px 16px;background:var(--amber-bg);font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)">
-      ℹ Sin ruta activa — el inventario del carro aparecerá cuando el ERP inicie una ruta
+      📦 Sin inventario disponible — no hay una ruta activa asignada a tu usuario. El supervisor debe iniciar tu ruta desde el ERP.
     </div>`;
   }
   let lastCat=null;
@@ -3177,20 +3231,26 @@ function actualizarMotivosMerma(prodId){
 
 // ─── PRINT FUNCTIONS ─────────────────────────────────────────
 async function imprimirPago(pago){
+  const choferNombre = pago.chofer||STATE.user?.nombre||STATE.user?.username||'';
+  const now=new Date(); const fecha2=now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'}); const hora2=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   const lines=[
     'ANAKEL DISTRIBUIDORA',
+    '+52 56 3187 8320',
     '================================',
     'COMPROBANTE DE PAGO',
     '--------------------------------',
+    `Fecha: ${fecha2}  Hora: ${hora2}`,
     `No: PAG-${pago.numero||pago.id}`,
+
     `Fecha: ${new Date(pago.fecha||Date.now()).toLocaleDateString('es-MX')}`,
     `Cliente: ${pago.clienteNombre||''}`,
+    choferNombre?`Recibió: ${choferNombre}`:'',
     '--------------------------------',
     `Método: ${pago.metodo==='banco'?'Transferencia/Banco':'Efectivo'}`,
     `MONTO:  MXN ${fmt(pago.monto||0)}`,
     '================================',
     '¡Gracias por su pago!'
-  ];
+  ].filter(Boolean);
   await printLines58(lines.join('\n'));
 }
 
@@ -3218,24 +3278,74 @@ async function imprimirEstadoCuenta(clienteId, clienteNombre){
   await printLines58(lines.join('\n'));
 }
 
-async function printLines58(text){
-  if(!navigator.bluetooth){ 
-    showToast('Bluetooth no disponible — copia el texto para compartir');
-    if(navigator.share) navigator.share({title:'Ticket Anakel',text});
-    return; 
+// ── Bluetooth printer state ──────────────────────────────────
+const BT_SERVICE = '000018f0-0000-1000-8000-00805f9b34fb';
+const BT_CHAR    = '00002af1-0000-1000-8000-00805f9b34fb';
+let _btDevice = null;   // saved device reference
+let _btChar   = null;   // saved characteristic
+
+async function getBTChar(){
+  // Try saved connection first
+  if(_btChar){
+    try{ await _btChar.writeValue(new Uint8Array([0])); return _btChar; }catch(e){ _btChar=null; _btDevice=null; }
   }
+  // Try reconnecting to saved device
+  if(_btDevice){
+    try{
+      const server = await _btDevice.gatt.connect();
+      const svc    = await server.getPrimaryService(BT_SERVICE);
+      _btChar      = await svc.getCharacteristic(BT_CHAR);
+      return _btChar;
+    }catch(e){ _btDevice=null; _btChar=null; }
+  }
+  // Need to request a new device
+  const device = await navigator.bluetooth.requestDevice({
+    filters:[{name:'PT-220'},{namePrefix:'Printer'},{namePrefix:'PT'},{namePrefix:'MTP'},{namePrefix:'RPP'}],
+    optionalServices:[BT_SERVICE]
+  });
+  const server = await device.gatt.connect();
+  const svc    = await server.getPrimaryService(BT_SERVICE);
+  _btChar      = await svc.getCharacteristic(BT_CHAR);
+  _btDevice    = device;
+  device.addEventListener('gattserverdisconnected', ()=>{ _btChar=null; });
+  return _btChar;
+}
+
+async function printLines58(text){
+  if(!navigator.bluetooth){
+    showToast('Bluetooth no disponible');
+    if(navigator.share) navigator.share({title:'Ticket Anakel',text});
+    return;
+  }
+  showToast('Enviando a impresora...');
   try{
-    showToast('Buscando impresora...');
-    const device=await navigator.bluetooth.requestDevice({
-      filters:[{name:'PT-220'},{namePrefix:'Printer'},{namePrefix:'PT'}],
-      optionalServices:['000018f0-0000-1000-8000-00805f9b34fb']
-    });
-    const server=await device.gatt.connect();
-    const service=await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-    const char=await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-    await char.writeValue(new TextEncoder().encode(text+'\n\n\n'));
-    showToast('Impreso ✓');
-  }catch(e){ showToast('No se pudo conectar a la impresora'); }
+    const char = await getBTChar();
+    // ESC/POS: init + center align for header
+    const ESC=0x1B, GS=0x1D;
+    const init    = new Uint8Array([ESC,0x40]);           // initialize
+    const center  = new Uint8Array([ESC,0x61,0x01]);      // center
+    const left    = new Uint8Array([ESC,0x61,0x00]);      // left
+    const bold_on = new Uint8Array([ESC,0x45,0x01]);
+    const bold_off= new Uint8Array([ESC,0x45,0x00]);
+    const cut     = new Uint8Array([GS,0x56,0x41,0x00]);  // full cut
+
+    const enc = new TextEncoder();
+    async function send(data){ await char.writeValue(data); await new Promise(r=>setTimeout(r,30)); }
+
+    await send(init);
+    await send(center);
+    await send(bold_on);
+    await send(enc.encode('ANAKEL DISTRIBUIDORA\n'));
+    await send(bold_off);
+    await send(enc.encode('+52 56 3187 8320\n'));
+    await send(left);
+    await send(enc.encode(text+'\n\n\n'));
+    await send(cut);
+    showToast('✓ Impreso');
+  }catch(e){
+    _btChar=null; _btDevice=null;
+    showToast('No se pudo imprimir: '+e.message.slice(0,40));
+  }
 }
 
 
@@ -3281,47 +3391,39 @@ function mostrarRutaActivaTopbar(){
 
 // ─── PDF TICKET GENERATOR ────────────────────────────────────
 function imprimirTicket58(v){
-  // Generate 58mm thermal ticket HTML
   const totales=calcTotales();
-  const fecha=v.fecha?(v.fecha.toDate?v.fecha.toDate():new Date(v.fecha)).toLocaleDateString('es-MX'):'';
+  const now=new Date();
+  const fecha=now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const hora=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const fechaVenta=v.fecha?(v.fecha.toDate?v.fecha.toDate():new Date(v.fecha)).toLocaleDateString('es-MX'):fecha;
   const saldo=Math.max(0,totales.total-(v.pagado||0));
-  const linea='--------------------------------';
-  const html=`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
+  const choferNombre=v.chofer||STATE.user?.nombre||STATE.user?.username||STATE.user?.email||'';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>
-  * { margin:0;padding:0;box-sizing:border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 10px; width: 58mm; max-width: 58mm; padding: 4px 2px; }
-  .center { text-align:center; }
-  .right { text-align:right; }
-  .bold { font-weight:bold; }
-  .line { border-top:1px dashed #000; margin:3px 0; }
-  .row { display:flex; justify-content:space-between; }
-  .product-name { font-size:9px; }
-  h1 { font-size:12px; font-weight:bold; text-align:center; }
-  h2 { font-size:10px; text-align:center; margin:2px 0; }
-  @media print {
-    @page { size: 58mm auto; margin: 0; }
-    body { width: 58mm; }
-  }
-</style>
-</head>
-<body>
-  <div class="center bold">ANAKEL DISTRIBUIDORA</div>
-  <div class="center" style="font-size:8px">Akil 24, Tlalpan, CDMX</div>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Courier New',monospace;font-size:10px;width:58mm;max-width:58mm;padding:4px 2px}
+  .center{text-align:center}.right{text-align:right}.bold{font-weight:bold}
+  .line{border-top:1px dashed #000;margin:3px 0}.row{display:flex;justify-content:space-between}
+  .logo{width:28mm;height:auto;margin:2px auto;display:block;filter:grayscale(100%) contrast(200%)}
+  @media print{@page{size:58mm auto;margin:0}body{width:58mm}}
+</style></head><body>
+  <img class="logo" src="${ANAKEL_LOGO}" alt="">
+  <div class="center bold" style="font-size:11px">ANAKEL DISTRIBUIDORA</div>
+  <div class="center" style="font-size:8px">+52 56 3187 8320</div>
   <div class="line"></div>
-  <div class="row"><span>${esc(v.numero||'')}</span><span>${fecha}</span></div>
+  <div class="row"><span>${esc(v.numero||'')}</span><span>${fechaVenta}</span></div>
+  <div style="font-size:9px">Hora: ${hora}</div>
   <div style="font-size:9px">Cliente: ${esc(v.clienteNombre||'')}</div>
+  <div style="font-size:9px">Chofer: ${esc(choferNombre)}</div>
   <div class="line"></div>
   ${(v.items||[]).map(item=>`
-    <div class="product-name">${esc(item.nombre||'')}</div>
+    <div style="font-size:9px">${esc(item.nombre||'')}</div>
     <div class="row" style="font-size:9px">
       <span>${fmt(item.cantidad)} x $${fmt(item.precio)}</span>
       <span>$${fmt((item.cantidad||0)*(item.precio||0))}</span>
     </div>`).join('')}
   ${[...(v.mermas||[]),...(v.devoluciones||[])].map(nc=>`
-    <div style="font-size:8px;color:#555">Dev/Merma: ${esc(nc.nombre||'')} (-$${fmt(nc.monto||0)})</div>`).join('')}
+    <div style="font-size:8px">Dev/Merma: ${esc(nc.nombre||'')} (-$${fmt(nc.monto||0)})</div>`).join('')}
   <div class="line"></div>
   ${totales.taxLines.map(t=>`<div class="row" style="font-size:9px"><span>${esc(t.label)}</span><span>$${fmt(t.monto)}</span></div>`).join('')}
   <div class="row bold"><span>TOTAL</span><span>$${fmt(totales.total)}</span></div>
@@ -3331,12 +3433,12 @@ function imprimirTicket58(v){
   <div class="line"></div>
   <div class="center" style="font-size:8px">Gracias por su preferencia</div>
   <br><br><br>
-</body>
-</html>`;
+</body></html>`;
   const w=window.open('','_blank','width=300,height=600');
   if(w){ w.document.write(html); w.document.close(); setTimeout(()=>w.print(),400); }
   else showToast('Habilita popups para imprimir');
 }
+
 
 function generarPDFVenta(v){
   const totales=calcTotales();
@@ -3372,12 +3474,7 @@ function generarPDFVenta(v){
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 32px; max-width: 700px; margin: 0 auto; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1a1a2e; }
-  .logo-area h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; }
-  .logo-area p { font-size: 11px; color: #888; margin-top: 2px; }
-  .inv-num { text-align: right; }
-  .inv-num .num { font-size: 22px; font-weight: 700; color: #2980d9; }
-  .inv-num .date { font-size: 12px; color: #888; margin-top: 2px; }
+  .detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ee;font-size:13px}
   .factura-label { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #1a1a2e; margin: 20px 0; text-transform: uppercase; }
   .bill-to { margin-bottom: 20px; }
   .bill-to label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -3398,22 +3495,14 @@ function generarPDFVenta(v){
 </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo-area">
-      <h1>Anakel Distribuidora</h1>
-      <p>Akil 24, Popular Santa Teresa, Tlalpan, Ciudad de México. C.P 14160</p>
-    </div>
-    <div class="inv-num">
-      <div class="num">${esc(v.numero||'')}</div>
-      <div class="date">${fecha}</div>
-    </div>
-  </div>
+  ${pdfHeaderHTML(esc(v.numero||''), fecha)}
 
   <div class="factura-label">Factura</div>
 
   <div class="bill-to">
     <label>Cobrar a</label>
     <div class="name">${esc(v.clienteNombre||'')}</div>
+    <div style="font-size:11px;color:#888;margin-top:4px">Atendido por: ${esc(v.chofer||STATE.user?.nombre||STATE.user?.username||'')}</div>
   </div>
 
   <table>
@@ -3465,6 +3554,246 @@ async function compartirVenta(){
   await guardarVentaActual();
   generarPDFVenta(STATE.currentVenta);
 }
+
+// ── PDF Estado de cuenta del cliente ─────────────────────────
+function generarPDFEstadoCuenta(clienteId){
+  const cli = STATE.clientes.find(c=>String(c.id)===String(clienteId)); if(!cli) return;
+  const ventas = (STATE.ventas||[]).filter(v=>String(v.clienteId)===String(clienteId)&&v.tipo==='venta').slice().reverse().slice(0,20);
+  const pagos = (STATE.pagos||[]).filter(p=>String(p.clienteId)===String(clienteId)).slice().reverse().slice(0,20);
+  const saldoActual = cli.saldo||0;
+  const fecha = new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  const choferNombre = STATE.user?.nombre||STATE.user?.username||STATE.user?.email||'';
+
+  const filasVentas = ventas.map(v=>`<tr>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px">${new Date(v.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})}</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px">${esc(v.numero||'')}</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px">Venta</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px;text-align:right;color:#c0392b">MXN ${fmt(v.total||0)}</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px;text-align:right;color:#27ae60">MXN ${fmt(v.pagado||0)}</td>
+  </tr>`).join('');
+
+  const filasPagos = pagos.map(p=>`<tr>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px">${new Date(p.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})}</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px">${esc(p.numero||'—')}</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px">Pago (${esc(p.metodo||'efectivo')})</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px;text-align:right">—</td>
+    <td style="padding:7px 6px;border-bottom:1px solid #f0f0ee;font-size:12px;text-align:right;color:#27ae60">MXN ${fmt(p.monto||0)}</td>
+  </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1a1a1a;padding:32px;max-width:700px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1a1a2e}
+  .logo-area h1{font-size:20px;font-weight:700;color:#1a1a2e}
+  .logo-area p{font-size:11px;color:#888;margin-top:2px}
+  .title{text-align:center;font-size:22px;font-weight:700;letter-spacing:3px;color:#1a1a2e;margin:20px 0;text-transform:uppercase}
+  .cli-box{background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+  .cli-name{font-size:16px;font-weight:700}
+  .saldo-box{text-align:right}
+  .saldo-label{font-size:11px;color:#888}
+  .saldo-val{font-size:22px;font-weight:700;color:${saldoActual>0?'#e67e22':'#27ae60'}}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  thead tr{background:#2980d9;color:white}
+  thead th{padding:10px 6px;font-size:11px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:.4px}
+  .footer{margin-top:32px;text-align:center;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:12px}
+  @media print{body{padding:16px}}
+</style></head><body>
+  ${pdfHeaderHTML('', fecha)}
+  ${choferNombre?`<div style="font-size:12px;color:#888;margin-bottom:8px">Atendido por: <strong>${esc(choferNombre)}</strong></div>`:""}
+
+  <div class="title">Estado de Cuenta</div>
+
+  <div class="cli-box">
+    <div>
+      <div class="cli-name">${esc(cli.nombre||'')}</div>
+      ${cli.ruta?`<div style="font-size:11px;color:#888">Ruta: ${esc(cli.ruta)}</div>`:''}
+    </div>
+    <div class="saldo-box">
+      <div class="saldo-label">SALDO ACTUAL</div>
+      <div class="saldo-val">MXN ${fmt(saldoActual)}</div>
+      <div style="font-size:11px;color:#888">${saldoActual>0?'Por cobrar':'Al corriente'}</div>
+    </div>
+  </div>
+
+  ${ventas.length||pagos.length?`<table>
+    <thead><tr>
+      <th>Fecha</th><th>Documento</th><th>Concepto</th>
+      <th style="text-align:right">Cargo</th><th style="text-align:right">Abono</th>
+    </tr></thead>
+    <tbody>${filasVentas}${filasPagos}</tbody>
+  </table>`:'<p style="color:#888;text-align:center;padding:24px">Sin movimientos registrados</p>'}
+
+  <div class="footer">
+    Documento generado el ${fecha} · Anakel Distribuidora
+  </div>
+</body></html>`;
+  const w=window.open('','_blank','width=750,height=900');
+  if(w){ w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500); }
+  else showToast('Habilita popups para generar PDF');
+}
+
+// ── PDF Comprobante de pago ───────────────────────────────────
+function generarPDFPago(p){
+  if(!p) return;
+  const fecha = new Date(p.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  const choferNombre = p.chofer||STATE.user?.nombre||STATE.user?.username||STATE.user?.email||'';
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1a1a2e}
+  .logo-area h1{font-size:20px;font-weight:700;color:#1a1a2e}
+  .title{text-align:center;font-size:22px;font-weight:700;letter-spacing:3px;color:#1a1a2e;margin:20px 0;text-transform:uppercase}
+  .monto-box{background:#eafaf1;border:2px solid #27ae60;border-radius:12px;padding:24px;text-align:center;margin:20px 0}
+  .monto-label{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+  .monto-val{font-size:36px;font-weight:700;color:#27ae60;margin:8px 0}
+  .detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ee;font-size:13px}
+  .footer{margin-top:32px;text-align:center;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:12px}
+  @media print{body{padding:16px}}
+</style></head><body>
+  ${pdfHeaderHTML(esc(p.numero||''), fecha)}
+
+  <div class="title">Comprobante de Pago</div>
+
+  <div class="monto-box">
+    <div class="monto-label">Monto recibido</div>
+    <div class="monto-val">MXN ${fmt(p.monto||0)}</div>
+    <div style="font-size:13px;color:#27ae60;font-weight:600">${p.metodo==='banco'?'Transferencia bancaria':'Efectivo'}</div>
+  </div>
+
+  <div class="detail-row"><span style="color:#888">Cliente</span><span style="font-weight:600">${esc(p.clienteNombre||'')}</span></div>
+  <div class="detail-row"><span style="color:#888">Fecha</span><span>${fecha}</span></div>
+  <div class="detail-row"><span style="color:#888">Método de pago</span><span>${esc(p.metodo==='banco'?'Transferencia bancaria':'Efectivo')}</span></div>
+  ${choferNombre?`<div class="detail-row"><span style="color:#888">Recibido por</span><span>${esc(choferNombre)}</span></div>`:''}
+  ${p.nota?`<div class="detail-row"><span style="color:#888">Nota</span><span>${esc(p.nota)}</span></div>`:''}
+
+  <div class="footer">Documento generado el ${fecha} · Anakel Distribuidora</div>
+</body></html>`;
+  const w=window.open('','_blank','width=680,height=800');
+  if(w){ w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500); }
+  else showToast('Habilita popups para generar PDF');
+}
+
+// ── Ticket 58mm pago ─────────────────────────────────────────
+function imprimirTicketPago(p){
+  if(!p) return;
+  const fecha = new Date(p.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const choferNombre = p.chofer||STATE.user?.nombre||STATE.user?.username||'';
+  const linea='--------------------------------';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Courier New',monospace;font-size:10px;width:58mm;max-width:58mm;padding:4px 2px}
+  .center{text-align:center}.right{text-align:right}.bold{font-weight:bold}
+  .line{border-top:1px dashed #000;margin:3px 0}.row{display:flex;justify-content:space-between}
+  @media print{@page{size:58mm auto;margin:0}body{width:58mm}}
+</style></head><body>
+  <img style="width:28mm;height:auto;margin:2px auto;display:block;filter:grayscale(100%) contrast(200%)" src="${ANAKEL_LOGO}" alt="">
+  <div class="center bold" style="font-size:11px">ANAKEL DISTRIBUIDORA</div>
+  <div class="center" style="font-size:8px">${ANAKEL_TEL}</div>
+  <div class="line"></div>
+  <div class="center bold" style="font-size:11px">COMPROBANTE DE PAGO</div>
+  <div class="line"></div>
+  <div class="row"><span>${esc(p.numero||'PAGO')}</span><span>${fecha}</span></div>
+  <div style="font-size:9px">Hora: ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+  <div style="font-size:9px">Cliente: ${esc(p.clienteNombre||'')}</div>
+  ${choferNombre?`<div style="font-size:9px">Recibió: ${esc(choferNombre)}</div>`:''}
+  <div class="line"></div>
+  <div class="row bold"><span>MONTO RECIBIDO</span></div>
+  <div class="right bold" style="font-size:13px">$${fmt(p.monto||0)}</div>
+  <div style="font-size:9px">Método: ${p.metodo==='banco'?'Transferencia':'Efectivo'}</div>
+  <div class="line"></div>
+  <div class="center" style="font-size:8px">Gracias por su pago</div>
+  <br><br><br>
+</body></html>`;
+  const w=window.open('','_blank','width:300,height:500');
+  if(w){ w.document.write(html); w.document.close(); setTimeout(()=>w.print(),400); }
+  else showToast('Habilita popups para imprimir');
+}
+
+// ── PDF Nota de crédito ───────────────────────────────────────
+function generarPDFNC(nc){
+  if(!nc) return;
+  const fecha = new Date(nc.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+  const choferNombre = nc.chofer||STATE.user?.nombre||STATE.user?.username||STATE.user?.email||'';
+  const tipoLabel = nc.tipo==='merma'?'Merma':'Devolución';
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1a1a1a;padding:32px;max-width:600px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1a1a2e}
+  .logo-area h1{font-size:20px;font-weight:700;color:#1a1a2e}
+  .title{text-align:center;font-size:22px;font-weight:700;letter-spacing:3px;color:#c0392b;margin:20px 0;text-transform:uppercase}
+  .monto-box{background:#fff0f0;border:2px solid #c0392b;border-radius:12px;padding:24px;text-align:center;margin:20px 0}
+  .monto-label{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+  .monto-val{font-size:36px;font-weight:700;color:#c0392b;margin:8px 0}
+  .detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ee;font-size:13px}
+  .footer{margin-top:32px;text-align:center;font-size:11px;color:#888;border-top:1px solid #eee;padding-top:12px}
+  @media print{body{padding:16px}}
+</style></head><body>
+  ${pdfHeaderHTML(esc(nc.numero||''), fecha)}
+
+  <div class="title">Nota de Crédito — ${tipoLabel}</div>
+
+  <div class="monto-box">
+    <div class="monto-label">Monto de la nota</div>
+    <div class="monto-val">(-) MXN ${fmt(nc.monto||0)}</div>
+    <div style="font-size:13px;color:#c0392b;font-weight:600">${tipoLabel}</div>
+  </div>
+
+  <div class="detail-row"><span style="color:#888">Cliente</span><span style="font-weight:600">${esc(nc.clienteNombre||'')}</span></div>
+  <div class="detail-row"><span style="color:#888">Fecha</span><span>${fecha}</span></div>
+  <div class="detail-row"><span style="color:#888">Tipo</span><span>${tipoLabel}</span></div>
+  <div class="detail-row"><span style="color:#888">Motivo</span><span>${esc(nc.motivo||'—')}</span></div>
+  ${nc.nota?`<div class="detail-row"><span style="color:#888">Nota</span><span>${esc(nc.nota)}</span></div>`:''}
+  ${choferNombre?`<div class="detail-row"><span style="color:#888">Registrado por</span><span>${esc(choferNombre)}</span></div>`:''}
+
+  <div class="footer">Documento generado el ${fecha} · Anakel Distribuidora</div>
+</body></html>`;
+  const w=window.open('','_blank','width=680,height=800');
+  if(w){ w.document.write(html); w.document.close(); setTimeout(()=>w.print(),500); }
+  else showToast('Habilita popups para generar PDF');
+}
+
+// ── Ticket 58mm NC ───────────────────────────────────────────
+function imprimirTicketNC(nc){
+  if(!nc) return;
+  const fecha = new Date(nc.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const choferNombre = nc.chofer||STATE.user?.nombre||STATE.user?.username||'';
+  const linea='--------------------------------';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Courier New',monospace;font-size:10px;width:58mm;max-width:58mm;padding:4px 2px}
+  .center{text-align:center}.right{text-align:right}.bold{font-weight:bold}
+  .line{border-top:1px dashed #000;margin:3px 0}.row{display:flex;justify-content:space-between}
+  @media print{@page{size:58mm auto;margin:0}body{width:58mm}}
+</style></head><body>
+  <img style="width:28mm;height:auto;margin:2px auto;display:block;filter:grayscale(100%) contrast(200%)" src="${ANAKEL_LOGO}" alt="">
+  <div class="center bold" style="font-size:11px">ANAKEL DISTRIBUIDORA</div>
+  <div class="center" style="font-size:8px">${ANAKEL_TEL}</div>
+  <div class="line"></div>
+  <div class="center bold" style="font-size:11px">NOTA DE CRÉDITO</div>
+  <div class="center" style="font-size:9px">${nc.tipo==='merma'?'MERMA':'DEVOLUCIÓN'}</div>
+  <div class="line"></div>
+  <div class="row"><span>${esc(nc.numero||'')}</span><span>${fecha}</span></div>
+  <div style="font-size:9px">Hora: ${new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</div>
+  <div style="font-size:9px">Cliente: ${esc(nc.clienteNombre||'')}</div>
+  ${choferNombre?`<div style="font-size:9px">Registró: ${esc(choferNombre)}</div>`:''}
+  <div class="line"></div>
+  <div style="font-size:9px">Motivo: ${esc(nc.motivo||'—')}</div>
+  <div class="row bold"><span>MONTO NC</span><span>(-) $${fmt(nc.monto||0)}</span></div>
+  <div class="line"></div>
+  <div class="center" style="font-size:8px">Documento de crédito</div>
+  <br><br><br>
+</body></html>`;
+  const w=window.open('','_blank','width:300,height:500');
+  if(w){ w.document.write(html); w.document.close(); setTimeout(()=>w.print(),400); }
+  else showToast('Habilita popups para imprimir');
+}
+
+
 
 // ─── DARK MODE ───────────────────────────────────────────────
 function initDarkMode(){
