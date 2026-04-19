@@ -605,6 +605,7 @@ function pdfHeaderHTML(docNum, fecha){
         <div style="font-size:18px;font-weight:700;color:#1a1a2e">Anakel Distribuidora</div>
         <div style="font-size:11px;color:#888">${ANAKEL_DIR}</div>
         <div style="font-size:11px;color:#888">${ANAKEL_TEL}</div>
+        <div style="font-size:11px;color:#888">ventas@grupoanakel.com.mx</div>
       </div>
     </div>
     <div style="text-align:right">
@@ -1618,6 +1619,15 @@ function abrirFormVenta(){
     <div style="padding:0 16px 12px">
       <div class="form-label">📦 Nota para próxima entrega <span style="font-size:10px;color:var(--text2)">(aparecerá al crear la siguiente venta a este cliente)</span></div>
       <textarea class="form-input" rows="2" style="resize:none" id="venta-nota-proxima" placeholder="Ej: Traer factura, cambiar sabor, cliente pide más cantidad...">${esc(v.notaProxima||'')}</textarea>
+    </div>
+    <div style="padding:0 16px 10px">
+      <button class="btn btn-full" onclick="abrirFirmaVenta()" style="border-color:#7c3aed;color:#7c3aed">
+        ✍️ ${v.firma?'Ver / cambiar firma':'Agregar firma del cliente'}
+      </button>
+      ${v.firma?`<div style="margin-top:6px;display:flex;align-items:center;gap:8px;padding:6px 0;font-size:11px;color:var(--text2)">
+        <img src="${v.firma}" style="height:32px;border:1px solid var(--border);border-radius:4px;background:white">
+        <span>Firmado por: ${esc(v.firmadoPor||'')}</span>
+      </div>`:''}
     </div>
     <div style="padding:0 16px 12px;display:flex;gap:8px">
       <button class="btn btn-full" onclick="abrirMermaEnVenta()" style="color:var(--amber);border-color:var(--amber)">+ Agregar merma</button>
@@ -2839,6 +2849,134 @@ function setupChoferRealtimeListeners(){
 }
 
 // ─── MERMAS Y DEVOLUCIONES EN VENTA ──────────────────────────
+function abrirFirmaVenta(){
+  const v = STATE.currentVenta;
+  const firmaActual = v.firma||'';
+  const firmadoPorActual = v.firmadoPor||v.clienteNombre||'';
+  openSheet(`<div class="sheet-title">✍️ Firma del cliente</div>
+    <div class="sheet-body" style="padding:16px">
+      <div class="form-group" style="padding:0;margin-bottom:14px">
+        <div class="form-label">Nombre del firmante</div>
+        <input class="form-input" id="firma-nombre" placeholder="Ej: Juan García" value="${esc(firmadoPorActual)}" style="margin-top:6px">
+      </div>
+      <div class="form-label" style="margin-bottom:8px">Firma (dibuja con el dedo)</div>
+      <div style="position:relative;border:2px solid var(--border);border-radius:10px;background:white;touch-action:none">
+        <canvas id="firma-canvas" style="display:block;width:100%;height:180px;border-radius:8px;cursor:crosshair"></canvas>
+        <button onclick="limpiarFirmaCanvas()" style="position:absolute;top:8px;right:8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">Borrar</button>
+      </div>
+      ${firmaActual?`<div style="margin-top:10px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Firma guardada actualmente:</div>
+        <img src="${firmaActual}" style="max-height:60px;border:1px solid var(--border);border-radius:6px;background:white;padding:4px">
+      </div>`:''}
+    </div>
+    <div class="action-bar">
+      <button class="btn" onclick="closeSheet()">Cancelar</button>
+      ${firmaActual?`<button class="btn" onclick="STATE.currentVenta.firma='';STATE.currentVenta.firmadoPor='';closeSheet();setTimeout(abrirFormVenta,150)">Quitar firma</button>`:''}
+      <button class="btn btn-primary" style="flex:1" onclick="guardarFirmaVenta()">Guardar firma</button>
+    </div>`,true);
+  // Initialize canvas after sheet opens
+  setTimeout(initFirmaCanvas, 100);
+}
+
+let _firmaDrawing = false;
+let _firmaCtx = null;
+
+function initFirmaCanvas(){
+  const canvas = document.getElementById('firma-canvas');
+  if(!canvas) return;
+  // Set actual pixel dimensions
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  _firmaCtx = ctx;
+
+  // Load existing signature if any
+  const existing = STATE.currentVenta?.firma;
+  if(existing){
+    const img = new Image();
+    img.onload = ()=> ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    img.src = existing;
+  }
+
+  // Touch events
+  canvas.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    _firmaDrawing = true;
+    const t = e.touches[0];
+    const r = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(t.clientX-r.left, t.clientY-r.top);
+  }, {passive:false});
+  canvas.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    if(!_firmaDrawing) return;
+    const t = e.touches[0];
+    const r = canvas.getBoundingClientRect();
+    ctx.lineTo(t.clientX-r.left, t.clientY-r.top);
+    ctx.stroke();
+  }, {passive:false});
+  canvas.addEventListener('touchend', ()=>{ _firmaDrawing=false; });
+  // Mouse events (desktop)
+  canvas.addEventListener('mousedown', e=>{
+    _firmaDrawing=true;
+    const r=canvas.getBoundingClientRect();
+    ctx.beginPath(); ctx.moveTo(e.clientX-r.left, e.clientY-r.top);
+  });
+  canvas.addEventListener('mousemove', e=>{
+    if(!_firmaDrawing) return;
+    const r=canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX-r.left, e.clientY-r.top); ctx.stroke();
+  });
+  canvas.addEventListener('mouseup', ()=>{ _firmaDrawing=false; });
+}
+
+function limpiarFirmaCanvas(){
+  const canvas = document.getElementById('firma-canvas');
+  if(!canvas||!_firmaCtx) return;
+  const rect = canvas.getBoundingClientRect();
+  _firmaCtx.clearRect(0, 0, rect.width, rect.height);
+}
+
+function guardarFirmaVenta(){
+  const canvas = document.getElementById('firma-canvas');
+  const nombre = document.getElementById('firma-nombre')?.value.trim()||'';
+  if(!canvas){ closeSheet(); return; }
+  // Check if canvas has content (not all transparent)
+  const ctx = canvas.getContext('2d');
+  const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  const hasContent = data.some((v,i)=>i%4===3&&v>0);
+  if(!hasContent && !STATE.currentVenta.firma){
+    showToast('Dibuja la firma primero'); return;
+  }
+  if(hasContent){
+    // Export as PNG data URL (white background)
+    const offscreen = document.createElement('canvas');
+    offscreen.width = canvas.width; offscreen.height = canvas.height;
+    const octx = offscreen.getContext('2d');
+    octx.fillStyle = 'white';
+    octx.fillRect(0,0,canvas.width,canvas.height);
+    octx.drawImage(canvas,0,0);
+    STATE.currentVenta.firma = offscreen.toDataURL('image/png');
+  }
+  STATE.currentVenta.firmadoPor = nombre;
+  // Auto-save to Firebase
+  if(STATE.currentVenta.id && _db && _fbFs){
+    const {doc,setDoc}=_fbFs;
+    setDoc(doc(_db,'ventas',STATE.currentVenta.id),
+      {firma:STATE.currentVenta.firma,firmadoPor:STATE.currentVenta.firmadoPor},
+      {merge:true}).catch(()=>{});
+  }
+  closeSheet();
+  setTimeout(abrirFormVenta,150);
+  showToast('✓ Firma guardada');
+}
+
 function abrirMermaEnVenta(){
   const v=STATE.currentVenta; if(!v) return;
   const html=`<div class="sheet-title">Agregar merma a esta venta</div><div class="sheet-body">
@@ -3349,7 +3487,11 @@ function generarPDFVenta(v){
     <div class="totals-row balance"><span>Saldo</span><span>MXN ${fmt(saldo)}</span></div>
   </div>
   ${v.nota?`<div style="margin-top:16px;font-size:12px;color:#444;border-top:1px solid #eee;padding-top:8px">${esc(v.nota)}</div>`:''}
-  <div class="footer">Generado el ${fecha} · Anakel Distribuidora</div>
+  ${v.firma?`<div style="margin-top:20px;border-top:1px solid #eee;padding-top:12px;display:flex;align-items:center;gap:16px">
+    <div style="font-size:11px;color:#888">Firmado por: <strong>${esc(v.firmadoPor||'')}</strong></div>
+    <img src="${v.firma}" style="height:50px;border:1px solid #ddd;border-radius:4px;background:white;padding:2px">
+  </div>`:''}
+  <div class="footer">Generado el ${fecha} · Anakel Distribuidora · ventas@grupoanakel.com.mx</div>
 </body></html>`;
 
   try{
@@ -3530,6 +3672,14 @@ function imprimirTicketPago(p){
 }
 
 
+function imprimirTicketNCById(id){
+  const nc = STATE.notas.find(n=>n.id===id||n.numero===id); if(!nc) return;
+  imprimirTicketNC(nc);
+}
+function generarPDFNCById(id){
+  const nc = STATE.notas.find(n=>n.id===id||n.numero===id); if(!nc) return;
+  generarPDFNC(nc);
+}
 function generarPDFNC(nc){
   if(!nc) return;
   const fecha = new Date(nc.fecha||Date.now()).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
@@ -3712,7 +3862,8 @@ function imprimirTicket58(v){
     v.nota?SEP:'',
     v.nota?esc(v.nota):'',
     SEP,
-    'Gracias por su preferencia'
+    'Gracias por su preferencia',
+    v.firmadoPor?`Firmado por: ${esc(v.firmadoPor)}`:''
   ].filter(l=>l!=='');
   printLines58(lines.join('\n'));
 }
