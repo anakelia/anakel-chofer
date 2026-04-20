@@ -413,7 +413,8 @@
     <!-- CLIENTES PAGE -->
     <div id="page-clientes" class="page">
       <div class="search-wrap" style="display:flex;gap:8px;align-items:center">
-        <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()" style="flex:1">
+        <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()" style="flex:1;margin:0">
+        <button onclick="toggleFiltroRutaActiva()" id="btn-filtro-ruta-activa" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">📍 Mi ruta</button>
         <button onclick="abrirFiltroRutas()" id="btn-filtro-rutas" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Ruta ▾</button>
       </div>
       <div id="cli-filtro-activo" style="display:none;padding:6px 16px;background:var(--amber-bg);font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)"></div>
@@ -694,6 +695,10 @@ async function initFirebase(){
         };
         STATE._permisos = sess.permisos || {};
         STATE._userRol = sess.rol || 'chofer';
+        if(sess.rol==='admin'||(sess.permisos||{})._esAdmin){
+          STATE._permisos._esAdmin = true;
+          STATE._userRol = 'admin';
+        }
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
         document.getElementById('topbar-title').textContent = sess.nombre || sess.username;
@@ -870,6 +875,11 @@ async function doLogin(){
       };
       STATE._permisos = usuario.permisos||{};
       STATE._userRol = usuario.rol||'chofer';
+      // Admin flag — admins see everything across all routes
+      if(usuario.rol==='admin'||(usuario.permisos||{})._esAdmin){
+        STATE._permisos._esAdmin = true;
+        STATE._userRol = 'admin';
+      }
       // Show app, hide login
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
@@ -963,9 +973,17 @@ async function loadAllData(){
       const rutasActivasSnap=await getDocs(collection(_db,'rutasActivas'));
       const rutaActiva=rutasActivasSnap.docs.find(d=>{const r=d.data();return r.chofer&&STATE.user?.email&&r.email===STATE.user.email;});
       if(rutaActiva){
-        const inv=rutaActiva.data()?.inventario||[];
-        STATE.inventarioCarro=inv;
+        const rd = rutaActiva.data();
+        const inv = rd?.inventario||[];
+        STATE.inventarioCarro = inv;
+        STATE._rutaActivaData = rd;
+        STATE._clientesEnRuta = (rd?.clientes||[]).map(c=>String(c.id||c.clienteId||'')).filter(Boolean);
         localStorage.setItem('anakel_inventario_carro',JSON.stringify(inv));
+        localStorage.setItem('anakel_clientes_en_ruta',JSON.stringify(STATE._clientesEnRuta));
+      } else {
+        // Load from cache
+        const cc = localStorage.getItem('anakel_clientes_en_ruta');
+        if(cc) STATE._clientesEnRuta = JSON.parse(cc);
       }
     }catch{}
     // Load choferes and supervisores for role detection
@@ -1179,11 +1197,26 @@ const _origRenderPagos = window.renderPagos;
 
 // Check permission for current user
 function puedoHacer(modulo, accion){
-  // Admins and supervisors can do everything
-  if(STATE._userRol==='admin'||STATE._userRol==='supervisor') return true;
+  if(esAdminOSupervisor()) return true;
   const p = STATE._permisos?.[modulo];
-  if(!p) return accion==='ver'; // default: only view
+  if(!p) return accion==='ver';
   return !!p[accion];
+}
+
+function esAdminOSupervisor(){
+  return STATE._userRol==='admin'||STATE._userRol==='supervisor'||STATE._permisos?._esAdmin===true;
+}
+
+// Clientes activos en la ruta del chofer
+function getClientesEnRuta(){
+  return STATE._clientesEnRuta||[];
+}
+
+function clienteEstaEnMiRuta(clienteId){
+  if(esAdminOSupervisor()) return true; // admins can sell to anyone
+  const enRuta = getClientesEnRuta();
+  if(!enRuta.length) return true; // no route data yet — don't block
+  return enRuta.includes(String(clienteId));
 }
 
 function navDrawer(page){
@@ -1216,6 +1249,12 @@ function renderPedidosPage(){
     if(v.tipo!=='pedido') return false;
     const d=new Date(v.fecha||Date.now()); if(d<desde||d>hasta) return false;
     if(q&&!(v.clienteNombre||'').toLowerCase().includes(q)&&!(v.numero||'').toLowerCase().includes(q)) return false;
+    // Scope: non-admins only see own pedidos
+    if(!esAdminOSupervisor()){
+      const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
+      const a=v.chofer||v.creadoPor||'';
+      if(a&&a!==me&&a!==mu) return false;
+    }
     return true;
   });
   const total=docs.reduce((s,v)=>s+(v.total||0),0);
@@ -1419,6 +1458,11 @@ function renderVentas(){
   if(tipoBtn) tipoBtn.textContent=periodTipoLabel(_ventasPeriod.tipo);
   const ventasQ=(document.getElementById('ventas-search')?.value||'').toLowerCase().trim();
   let ventas=STATE.ventas.filter(v=>v.tipo==='venta'&&inPeriod(v.fecha,_ventasPeriod));
+  // Scope: non-admins only see their own ventas
+  if(!esAdminOSupervisor()){
+    const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
+    ventas=ventas.filter(v=>(v.chofer&&(v.chofer===me||v.chofer===mu))||(v.creadoPor&&(v.creadoPor===me||v.creadoPor===mu)));
+  }
   if(_ventasFilter==='pendiente') ventas=ventas.filter(v=>v.estado!=='recibido');
   else if(_ventasFilter==='recibido') ventas=ventas.filter(v=>v.estado==='recibido');
   if(ventasQ) ventas=ventas.filter(v=>(v.clienteNombre||'').toLowerCase().includes(ventasQ)||(v.numero||'').toLowerCase().includes(ventasQ));
@@ -1819,13 +1863,28 @@ function seleccionarCliente(){
 
 function filterClis(q){
   const res=document.getElementById('cli-results'); if(!res) return;
-  const clis=STATE.clientes.filter(c=>c.activo!==false&&(!q||c.nombre?.toLowerCase().includes(q.toLowerCase()))).slice(0,30);
+  // For ventas/pagos/NC: restrict to clients in active route (unless admin/supervisor)
+  // For cotizaciones/pedidos: all clients allowed
+  const tipo=STATE.currentVenta?.tipo||'venta';
+  const allowAll = esAdminOSupervisor()||tipo==='cotizacion'||tipo==='pedido';
+  let clis=STATE.clientes.filter(c=>{
+    if(c.activo===false) return false;
+    if(!allowAll && !clienteEstaEnMiRuta(c.id)) return false;
+    if(q&&!c.nombre?.toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  }).slice(0,50);
   if(!clis.length){ res.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Sin clientes disponibles</div>'; return; }
   res.innerHTML=clis.map(c=>`<div class="list-item" onclick="setCli('${c.id}')"><div class="avatar">${avatarLetter(c.nombre)}</div><div class="item-main"><div class="item-name">${esc(c.nombre)}</div><div class="item-sub">${esc(c.ruta||'')}</div></div><div class="item-right"><div class="item-amount">MXN ${fmt(c.saldo||0)}</div></div></div>`).join('');
 }
 
 function setCli(id){
   const c=STATE.clientes.find(x=>String(x.id)===String(id)); if(!c) return;
+  // Guard: for venta/pago/NC, only allow route clients unless admin
+  const tipo=STATE.currentVenta?.tipo||'venta';
+  if(!esAdminOSupervisor()&&tipo!=='cotizacion'&&tipo!=='pedido'&&!clienteEstaEnMiRuta(c.id)){
+    showToast('Este cliente no está en tu ruta activa');
+    return;
+  }
   STATE.currentVenta.clienteId=c.id;
   STATE.currentVenta.clienteNombre=c.nombre;
   closeSheet();
@@ -2059,6 +2118,16 @@ function renderClientes(){
     _rutaNombre: c.rutaNombre||getRutaNombre(c.ruta)||'Sin ruta'
   }));
   if(q) clis=clis.filter(c=>c.nombre?.toLowerCase().includes(q)||c._rutaNombre?.toLowerCase().includes(q));
+  // Apply "Mi ruta activa" quick filter
+  if(_filtroSoloMiRuta){
+    const enRuta = getClientesEnRuta();
+    if(enRuta.length) clis=clis.filter(c=>enRuta.includes(String(c.id)));
+    else { // Show message if no route active
+      const list=document.getElementById('clientes-list');
+      if(list) list.innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--amber)">📍 Sin ruta activa — activa el filtro cuando tengas una ruta abierta</div>';
+      return;
+    }
+  }
   // Apply route filter
   if(_filtroRutasActivas.length>0) clis=clis.filter(c=>_filtroRutasActivas.includes(c._rutaNombre||'Sin ruta'));
   // Sort by ruta name then by client name — ensures grouping works correctly
@@ -2248,6 +2317,11 @@ function renderNC(){
   const list=document.getElementById('nc-list'); if(!list) return;
   const q=(document.getElementById('nc-search')?.value||'').toLowerCase().trim();
   let notas=STATE.notas.filter(n=>n.tipo===STATE.ncTab);
+  // Scope: non-admins only see their own NCs
+  if(!esAdminOSupervisor()){
+    const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
+    notas=notas.filter(n=>{const a=n.chofer||n.creadoPor||''; return !a||a===me||a===mu;});
+  }
   if(q) notas=notas.filter(n=>(n.clienteNombre||'').toLowerCase().includes(q)||(n.numero||'').toLowerCase().includes(q));
   notas=notas.slice(0,50);
   if(!notas.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados':'Sin NC por '+(STATE.ncTab==='devolucion'?'devolución':'merma')}</div>`; return; }
@@ -3104,6 +3178,19 @@ let _filtroRutasActivas = []; // [] = todas
 let _filtroCategoriasActivas = []; // [] = todas
 
 // ─── FILTRO DE RUTAS EN CLIENTES ─────────────────────────────
+let _filtroSoloMiRuta = false;
+
+function toggleFiltroRutaActiva(){
+  _filtroSoloMiRuta = !_filtroSoloMiRuta;
+  const btn = document.getElementById('btn-filtro-ruta-activa');
+  if(btn){
+    btn.style.background = _filtroSoloMiRuta ? 'var(--accent)' : '';
+    btn.style.color = _filtroSoloMiRuta ? 'white' : '';
+    btn.style.borderColor = _filtroSoloMiRuta ? 'var(--accent)' : '';
+  }
+  renderClientes();
+}
+
 function abrirFiltroRutas(){
   const rutas=[...new Set(STATE.clientes.filter(c=>c.activo!==false).map(c=>c.rutaNombre||c._rutaNombre||'Sin ruta'))].sort((a,b)=>a.localeCompare(b,'es'));
   const html=`<div class="sheet-title">Filtrar por ruta</div><div class="sheet-body">
