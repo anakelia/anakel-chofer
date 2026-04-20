@@ -965,6 +965,15 @@ async function loadAllData(){
     STATE.gastos = gastosSnap.docs.map(d=>({id:d.id,...d.data()}));
     // Also load rutas for client name display
     try{ const rutasSnap=await getDocs(collection(_db,'rutas')); STATE.rutas=rutasSnap.docs.map(d=>({id:d.id,...d.data()})); }catch{}
+    // Load my solicitudes (so I can see which are pending)
+    try{
+      const me=STATE.user?.email||STATE.user?.username||'';
+      if(me){
+        const solSnap=await getDocs(collection(_db,'solicitudes'));
+        STATE._misSolicitudes=solSnap.docs.map(d=>({...d.data(),id:d.id}))
+          .filter(s=>s.solicitante===me||s.creadoPor===me);
+      }
+    }catch{}
     // Load inventario from active route (set by ERP)
     try{
       const cached=localStorage.getItem('anakel_inventario_carro');
@@ -1201,6 +1210,30 @@ function puedoHacer(modulo, accion){
   const p = STATE._permisos?.[modulo];
   if(!p) return accion==='ver';
   return !!p[accion];
+}
+
+// ── No-route banner ──────────────────────────────────────────
+function bannerSinRuta(modulo){
+  const msgs = {
+    ventas:    'No hay notas de venta disponibles hasta que se abra una ruta activa.',
+    pagos:     'No hay pagos disponibles hasta que se abra una ruta activa.',
+    nc:        'No hay notas de crédito disponibles hasta que se abra una ruta activa.',
+    productos: 'No hay inventario disponible hasta que se abra una ruta activa.',
+    clientes:  'Puedes ver todos los clientes, pero para crear ventas necesitas una ruta activa.',
+    gastos:    'Puedes registrar gastos aunque no haya ruta activa.'
+  };
+  const msg = msgs[modulo]||'No hay datos disponibles hasta que se abra una ruta activa.';
+  return `<div style="margin:16px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:16px;text-align:center">
+    <div style="font-size:24px;margin-bottom:8px">🗺️</div>
+    <div style="font-size:14px;font-weight:600;color:var(--amber);margin-bottom:4px">Sin ruta activa</div>
+    <div style="font-size:13px;color:var(--text2)">${msg}</div>
+  </div>`;
+}
+
+function tieneSinRuta(){
+  // For chofers (not admin/supervisor), check if route is active
+  if(esAdminOSupervisor()) return false;
+  return !STATE._rutaActivaNombre && getClientesEnRuta().length===0;
 }
 
 function esAdminOSupervisor(){
@@ -1471,7 +1504,10 @@ function renderVentas(){
   if(totalEl) totalEl.textContent='MXN '+fmt(total);
   const list = document.getElementById('ventas-list');
   if(!list) return;
-  if(!ventas.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin ventas este mes</div>'; return; }
+  if(!ventas.length){
+    list.innerHTML = tieneSinRuta() ? bannerSinRuta('ventas') : '<div style="padding:40px;text-align:center;color:var(--text3)">Sin ventas este mes</div>';
+    return;
+  }
   const byDate = {};
   ventas.forEach(v=>{ const k=fmtDate(v.fecha); if(!byDate[k]) byDate[k]=[]; byDate[k].push(v); });
   let html = '';
@@ -1479,11 +1515,14 @@ function renderVentas(){
     items.forEach(v=>{
       const d = fmtDateShort(v.fecha);
       const estado = v.estado==='recibido'?'<span class="badge badge-green">Recibido</span>':'<span class="badge badge-gray">No recibido</span>';
+      // Check if there's a pending delete request for this venta
+      const solsLocales = (STATE._misSolicitudes||[]);
+      const pendDel = solsLocales.find(s=>s.tipo==='eliminar_venta'&&(s.ventaId===v.id||s.ventaNum===v.numero)&&s.estado==='pendiente');
       const saldo = (v.total||0)-(v.pagado||0);
-      html+=`<div class="doc-item" onclick="abrirVenta('${v.id}')">
+      html+=`<div class="doc-item" onclick="abrirVenta('${v.id}')" style="${pendDel?'background:var(--amber-bg);':''}">
         <div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div>
         <div class="doc-info">
-          <div class="doc-num">${esc(v.numero||'')} &nbsp;${estado}</div>
+          <div class="doc-num">${esc(v.numero||'')} &nbsp;${estado}${pendDel?'<span class="badge badge-amber" style="font-size:9px">⏳ Eliminación pendiente</span>':''}</div>
           <div class="doc-client">${esc(v.clienteNombre||'Sin cliente')}</div>
         </div>
         <div class="doc-right">
@@ -1681,10 +1720,12 @@ function abrirFormVenta(){
       ${(v.mermas||[]).map(m=>`<div>Merma: ${esc(m.nombre)} ×${m.cantidad} — ${esc(m.motivo)} (-MXN ${fmt(m.monto)})</div>`).join('')}
       ${(v.devoluciones||[]).map(d=>`<div>Dev: ${esc(d.nombre)} ×${d.cantidad} — ${esc(d.motivo)} (-MXN ${fmt(d.monto)})</div>`).join('')}
     </div>`:''}
-    ${v.id?`<div style="padding:0 16px 16px">${puedoHacer('ventas','editar')
-      ? `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="eliminarVentaDirecto('${v.id}')">🗑 Eliminar venta</button>`
-      : `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="solicitarEliminar('${v.id}')">Solicitar eliminación</button>`
-    }</div>`:''}
+    ${v.id?`<div style="padding:0 16px 16px">${(()=>{
+      const solPend=(STATE._misSolicitudes||[]).find(s=>s.tipo==='eliminar_venta'&&(s.ventaId===v.id||s.ventaNum===v.numero)&&s.estado==='pendiente');
+      if(solPend) return `<button class="btn btn-full" style="color:var(--amber);border-color:var(--amber);background:var(--amber-bg)" onclick="cancelarSolicitudEliminar('${solPend.id}')">⏳ Cancelar solicitud de eliminación</button>`;
+      if(puedoHacer('ventas','editar')) return `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="eliminarVentaDirecto('${v.id}')">🗑 Eliminar venta</button>`;
+      return `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="solicitarEliminar('${v.id}')">Solicitar eliminación</button>`;
+    })()}</div>`:''}
     <div class="action-bar">
       <button class="btn" onclick="closeSheet()">Cancelar</button>
       <button class="btn" onclick="imprimirTicket58(STATE.currentVenta)" title="Ticket 58mm">🖨</button>
@@ -2008,10 +2049,29 @@ function eliminarVentaDirecto(id){
   renderVentas();
 }
 
+async function cancelarSolicitudEliminar(solId){
+  if(!confirm('¿Cancelar esta solicitud de eliminación?')) return;
+  // Remove from Firebase
+  if(_db&&_fbFs){
+    try{
+      const{doc,setDoc}=_fbFs;
+      await setDoc(doc(_db,'solicitudes',solId),{estado:'cancelada_por_chofer',canceladaEn:new Date().toISOString()},{merge:true});
+    }catch(e){}
+  }
+  // Remove from local state
+  STATE._misSolicitudes=(STATE._misSolicitudes||[]).filter(s=>s.id!==solId);
+  showToast('Solicitud cancelada');
+  closeSheet();
+  setTimeout(abrirFormVenta,150);
+}
+
 async function solicitarEliminar(id){
   const motivo=prompt('Motivo para solicitar eliminación:');
   if(!motivo) return;
-  const sol={tipo:'eliminar_venta',ventaId:id,motivo,solicitante:STATE.user?.email,fecha:new Date().toISOString(),estado:'pendiente'};
+  const v = (STATE.ventas||[]).find(x=>x.id===id);
+  const sol={tipo:'eliminar_venta',ventaId:id,ventaNum:v?.numero||'',clienteNombre:v?.clienteNombre||'',ventaMonto:v?.total||0,
+    motivo,solicitante:STATE.user?.email,chofer:STATE.user?.nombre||STATE.user?.username||STATE.user?.email,
+    ruta:STATE._rutaActivaNombre||'',fecha:new Date().toISOString(),estado:'pendiente'};
   try{ const { collection, addDoc } = _fbFs; await addDoc(collection(_db,'solicitudes'),sol); }
   catch(e){ addToQueue({type:'add',col:'solicitudes',id:'sol_'+Date.now(),data:sol}); }
   showToast('Solicitud enviada al gerente ✓'); closeSheet();
@@ -2041,10 +2101,14 @@ function renderPagos(){
   const total=pagos.reduce((s,p)=>s+(p.monto||0),0);
   const totalEl=document.getElementById('pagos-total');
   if(totalEl) totalEl.textContent='MXN '+fmt(total);
-  if(!pagos.length){ list.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3)">Sin pagos en este período</div>'; return; }
+  if(!pagos.length){
+    list.innerHTML = tieneSinRuta() ? bannerSinRuta('pagos') : '<div style="padding:40px;text-align:center;color:var(--text3)">Sin pagos en este período</div>';
+    return;
+  }
   list.innerHTML=pagos.map(p=>{
     const d=fmtDateShort(p.fecha);
-    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div><div style="display:flex;gap:3px;margin-top:4px"><button onclick="event.stopPropagation();imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-sm" style="font-size:11px">🖨</button><button onclick="event.stopPropagation();generarPDFPagoById('${p.id||p.numero}')" class="btn btn-sm" style="font-size:11px">📄</button></div></div></div>`;
+    const solNCPend=(STATE._misSolicitudes||[]).find(s=>(s.tipo==='eliminar_nc'||s.tipo==='eliminar_nota_credito')&&(s.ncId===n.id||s.ncNum===n.numero)&&s.estado==='pendiente');
+    return `<div class="doc-item" style="${solNCPend?'background:var(--amber-bg);':''}"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div><div style="display:flex;gap:3px;margin-top:4px"><button onclick="event.stopPropagation();imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-sm" style="font-size:11px">🖨</button><button onclick="event.stopPropagation();generarPDFPagoById('${p.id||p.numero}')" class="btn btn-sm" style="font-size:11px">📄</button></div></div></div>`;
   }).join('');
 }
 
@@ -2324,7 +2388,10 @@ function renderNC(){
   }
   if(q) notas=notas.filter(n=>(n.clienteNombre||'').toLowerCase().includes(q)||(n.numero||'').toLowerCase().includes(q));
   notas=notas.slice(0,50);
-  if(!notas.length){ list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados':'Sin NC por '+(STATE.ncTab==='devolucion'?'devolución':'merma')}</div>`; return; }
+  if(!notas.length){
+    list.innerHTML = (!q && tieneSinRuta()) ? bannerSinRuta('nc') : `<div style="padding:40px;text-align:center;color:var(--text3)">${q?'Sin resultados':'Sin NC por '+(STATE.ncTab==='devolucion'?'devolución':'merma')}</div>`;
+    return;
+  }
   list.innerHTML=notas.map(n=>{
     const dt=fmtDateShort(n.fecha);
     const enlace=n.ventaEnlaceNum?`<button onclick="event.stopPropagation();abrirVentaPorNumero('${esc(n.ventaEnlaceNum)}')" style="background:none;border:none;color:var(--blue);font-size:10px;cursor:pointer;padding:0;text-decoration:underline"> → ${esc(n.ventaEnlaceNum)}</button>`:'';
