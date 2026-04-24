@@ -2287,10 +2287,18 @@ async function compartirVenta(){
 function eliminarVentaDirecto(id){
   if(!confirm('¿Eliminar esta venta definitivamente? Esta acción no se puede deshacer.')) return;
   STATE.ventas = (STATE.ventas||[]).filter(v=>v.id!==id);
-  // Queue deletion to Firebase
-  addToQueue({type:'delete',col:'ventas',id});
+  // Delete from Firebase directly if online, otherwise queue
+  if(_db && _fbFs && STATE.isOnline){
+    const {doc, deleteDoc} = _fbFs;
+    deleteDoc(doc(_db,'ventas',id))
+      .then(()=>{ cacheData(); showToast('Venta eliminada ✓'); })
+      .catch(e=>{ addToQueue({type:'delete',col:'ventas',id}); showToast('Sin conexión — se eliminará al sincronizar'); });
+  } else {
+    addToQueue({type:'delete',col:'ventas',id});
+    showToast('Sin conexión — se eliminará al sincronizar');
+  }
+  cacheData();
   closeSheet();
-  showToast('Venta eliminada');
   renderVentas();
 }
 
