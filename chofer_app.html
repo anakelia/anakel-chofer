@@ -314,6 +314,8 @@
   .flex-between { display: flex; justify-content: space-between; align-items: center; }
   .gap-8 { gap: 8px; }
   .hidden { display: none !important; }
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
 </style>
 </head>
 <body>
@@ -416,6 +418,7 @@
         <input class="search-input" id="cli-search" placeholder="Buscar cliente..." oninput="renderClientes()" style="flex:1;margin:0">
         <button onclick="toggleFiltroRutaActiva()" id="btn-filtro-ruta-activa" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">📍 Mi ruta</button>
         <button onclick="abrirFiltroRutas()" id="btn-filtro-rutas" class="btn btn-sm" style="white-space:nowrap;flex-shrink:0">Ruta ▾</button>
+        <button onclick="nuevoClienteChofer()" class="btn btn-sm btn-primary" style="white-space:nowrap;flex-shrink:0">+ Cliente</button>
       </div>
       <div id="cli-filtro-activo" style="display:none;padding:6px 16px;background:var(--amber-bg);font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)"></div>
       <div id="clientes-list" style="background:var(--surface)"></div>
@@ -986,13 +989,18 @@ async function loadAllData(){
         const inv = rd?.inventario||[];
         STATE.inventarioCarro = inv;
         STATE._rutaActivaData = rd;
+        STATE._rutaActivaDocId = rutaActiva.id;
         STATE._clientesEnRuta = (rd?.clientes||[]).map(c=>String(c.id||c.clienteId||'')).filter(Boolean);
+        STATE._rutaActivaNombre = rd?.ruta||STATE._rutaActivaNombre||'';
+        STATE._rutaActivaId = rd?.id||rutaActiva.id;
         localStorage.setItem('anakel_inventario_carro',JSON.stringify(inv));
         localStorage.setItem('anakel_clientes_en_ruta',JSON.stringify(STATE._clientesEnRuta));
+        localStorage.setItem('anakel_ruta_data',JSON.stringify(rd));
       } else {
-        // Load from cache
         const cc = localStorage.getItem('anakel_clientes_en_ruta');
         if(cc) STATE._clientesEnRuta = JSON.parse(cc);
+        const rd2 = localStorage.getItem('anakel_ruta_data');
+        if(rd2) try{ STATE._rutaActivaData = JSON.parse(rd2); }catch{}
       }
     }catch{}
     // Load choferes and supervisores for role detection
@@ -1063,51 +1071,117 @@ function renderMiRuta(){
     cont.innerHTML=`<div style="text-align:center;padding:40px">
       <div style="font-size:48px;margin-bottom:12px">🗺️</div>
       <div style="font-size:16px;font-weight:600;margin-bottom:8px">Sin ruta activa</div>
-      <div style="color:var(--text3);font-size:13px">No hay rutas activas. El supervisor debe iniciar tu ruta desde el sistema principal.</div>
+      <div style="color:var(--text3);font-size:13px">El supervisor debe iniciar tu ruta desde el ERP.</div>
     </div>`;
     return;
   }
-  const aperturaLocal = STATE._aperturaActiva||{};
-  const clientes = aperturaLocal.clientes||[];
-  const inventario = aperturaLocal.inventario||STATE._inventarioRuta||[];
-  const di = aperturaLocal.di||STATE._rutaActiva?.di||0;
-  const fechaInicio = aperturaLocal.fecha||new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long'});
-  const ventasHoy=(STATE.ventas||[]).filter(v=>v.tipo==='venta');
-  const pagosHoy=(STATE.pagos||[]);
+
+  const rd = STATE._rutaActivaData||{};
+  // Inventario inicial (II) vs actual en carro
+  const invInicial = rd.inventarioInicial||rd.inventario_inicial||[];
+  const invActual  = rd.inventario||STATE.inventarioCarro||[];
+  const di         = rd.di||0;
+  const diExtras   = rd.diExtras||rd.di_extras||0;
+  const diTotal    = di + diExtras;
+  const sci        = rd.sci||0;
+  const fechaInicio = rd.fecha ? new Date(rd.fecha).toLocaleDateString('es-MX',{weekday:'long',day:'2-digit',month:'long'}) : new Date().toLocaleDateString('es-MX',{weekday:'long',day:'2-digit',month:'long'});
+  const clientes   = rd.clientes||[];
+
+  // Clientes atendidos = los que tienen al menos una venta HOY
+  const hoy = new Date().toISOString().slice(0,10);
+  const ventasHoy=(STATE.ventas||[]).filter(v=>{
+    const fd=(v.fecha?.toDate?v.fecha.toDate():new Date(v.fecha||0)).toISOString().slice(0,10);
+    return v.tipo==='venta'&&fd===hoy;
+  });
+  const pagosHoy=(STATE.pagos||[]).filter(p=>{
+    const fd=(p.fecha?.toDate?p.fecha.toDate():new Date(p.fecha||0)).toISOString().slice(0,10);
+    return fd===hoy;
+  });
+  const clientesAtendidosIds=new Set(ventasHoy.map(v=>String(v.clienteId||'')));
   const totalVendido=ventasHoy.reduce((s,v)=>s+(v.total||0),0);
   const totalCobrado=pagosHoy.reduce((s,p)=>s+(p.monto||0),0);
+  const atendidos=clientes.filter(cl=>clientesAtendidosIds.has(String(cl.id||'')));
+  const pendientes=clientes.filter(cl=>!clientesAtendidosIds.has(String(cl.id||'')));
+
+  // Merge inventario inicial and actual for comparison
+  const invMap={};
+  invInicial.forEach(i=>{ invMap[i.sku||i.id]={sku:i.sku||i.id,nombre:i.nombre||i.sku,inicial:i.cantidad||0,actual:0}; });
+  invActual.forEach(i=>{
+    const k=i.sku||i.id;
+    if(!invMap[k]) invMap[k]={sku:k,nombre:i.nombre||k,inicial:0,actual:0};
+    invMap[k].actual=i.cantidad||0;
+  });
+  const invRows=Object.values(invMap).filter(i=>i.inicial>0||i.actual>0);
+
   cont.innerHTML=`
-    <div style="background:var(--accent);color:white;border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="font-size:11px;opacity:.8;margin-bottom:4px">RUTA ACTIVA</div>
-      <div style="font-size:20px;font-weight:700;margin-bottom:2px">${esc(ruta)}</div>
-      <div style="font-size:12px;opacity:.8">${fechaInicio}</div>
+    <div style="background:linear-gradient(135deg,var(--accent),var(--accent-dark,var(--accent)));color:white;border-radius:14px;padding:18px;margin-bottom:16px">
+      <div style="font-size:10px;opacity:.7;letter-spacing:.08em;margin-bottom:4px">RUTA ACTIVA</div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:2px">${esc(ruta)}</div>
+      <div style="font-size:12px;opacity:.75">${fechaInicio}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Clientes en ruta</div>
-        <div style="font-size:28px;font-weight:700">${clientes.length||'—'}</div>
+
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="metric-card">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:2px">DI Total (con extras)</div>
+        <div style="font-size:22px;font-weight:700">$${fmt(diTotal)}</div>
+        ${diExtras>0?`<div style="font-size:10px;color:var(--text2)">Base $${fmt(di)} + extras $${fmt(diExtras)}</div>`:''}
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Dinero inicial</div>
-        <div style="font-size:22px;font-weight:700">$${fmt(di)}</div>
+      <div class="metric-card">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:2px">SCi clientes</div>
+        <div style="font-size:22px;font-weight:700">$${fmt(sci)}</div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Vendido hoy</div>
+      <div class="metric-card" style="border-color:var(--accent)">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Vendido hoy</div>
         <div style="font-size:22px;font-weight:700;color:var(--accent)">$${fmt(totalVendido)}</div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Cobrado hoy</div>
+      <div class="metric-card" style="border-color:var(--green)">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Cobrado hoy</div>
         <div style="font-size:22px;font-weight:700;color:var(--green)">$${fmt(totalCobrado)}</div>
       </div>
     </div>
-    ${inventario.filter(i=>i.cantidad>0).length?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">INVENTARIO EN CARRO</div>
-      ${inventario.filter(i=>i.cantidad>0).map(i=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${esc(i.nombre||i.sku||'')}</span><span style="font-weight:600">${i.cantidad} pzas</span></div>`).join('')}
+
+    <!-- Inventario inicial vs actual -->
+    ${invRows.length?`<div class="section-card" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">📦 INVENTARIO</div>
+      <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:4px 10px;align-items:center;font-size:12px">
+        <div style="font-size:10px;color:var(--text3)">Producto</div>
+        <div style="font-size:10px;color:var(--text3);text-align:right">Inicial</div>
+        <div style="font-size:10px;color:var(--text3);text-align:right">Actual</div>
+        <div style="font-size:10px;color:var(--text3);text-align:right">Diff</div>
+        ${invRows.map(i=>{
+          const diff=i.actual-i.inicial;
+          const diffColor=diff<0?'var(--red)':diff>0?'var(--green)':'var(--text2)';
+          return `<div style="padding:4px 0;border-top:1px solid var(--border)">${esc(i.nombre||i.sku)}</div>
+            <div style="text-align:right;padding:4px 0;border-top:1px solid var(--border)">${i.inicial}</div>
+            <div style="text-align:right;font-weight:600;padding:4px 0;border-top:1px solid var(--border)">${i.actual}</div>
+            <div style="text-align:right;color:${diffColor};padding:4px 0;border-top:1px solid var(--border)">${diff>0?'+':''}${diff}</div>`;
+        }).join('')}
+      </div>
     </div>`:``}
-    ${clientes.length?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px">CLIENTES EN RUTA (${clientes.length})</div>
-      ${clientes.slice(0,5).map(cl=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${esc(cl.nombre||cl.clienteNombre||'')}</span><span style="color:var(--text2);font-size:11px">$${fmt(cl.saldo||0)}</span></div>`).join('')}
-      ${clientes.length>5?`<div style="font-size:11px;color:var(--text3);padding-top:6px">y ${clientes.length-5} más...</div>`:``}
+
+    <!-- Clientes pendientes -->
+    ${pendientes.length?`<div class="section-card" style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">
+        ⏳ POR ATENDER (${pendientes.length})
+        <span style="font-weight:400;font-size:11px;margin-left:8px">${atendidos.length} de ${clientes.length} atendidos</span>
+      </div>
+      ${pendientes.map(cl=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">${esc(cl.nombre||cl.clienteNombre||'')}</span>
+        <span style="font-size:11px;color:var(--red)">SCi $${fmt(cl.sci||cl.saldo||0)}</span>
+      </div>`).join('')}
+    </div>`:``}
+
+    <!-- Clientes atendidos -->
+    ${atendidos.length?`<div class="section-card">
+      <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:8px">✓ ATENDIDOS (${atendidos.length})</div>
+      ${atendidos.map(cl=>{
+        const venta=ventasHoy.find(v=>String(v.clienteId)===String(cl.id||''));
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:13px">${esc(cl.nombre||cl.clienteNombre||'')}</span>
+          <span style="font-size:11px;color:var(--green)">$${fmt(venta?.total||0)}</span>
+        </div>`;
+      }).join('')}
     </div>`:``}`;
 }
 
@@ -1447,6 +1521,7 @@ function renderCurrentPage(){
   else if(p==='rutas_pasadas'){ renderRutasPasadas(); }
   else if(p==='nc') renderNC();
   else if(p==='gastos') renderGastos();
+  else if(p==='solicitudes') renderSolicitudes();
   else if(p==='productos') renderProductos();
   else if(p==='notas') renderNotasPage();
 }
@@ -1491,10 +1566,21 @@ function renderVentas(){
   if(tipoBtn) tipoBtn.textContent=periodTipoLabel(_ventasPeriod.tipo);
   const ventasQ=(document.getElementById('ventas-search')?.value||'').toLowerCase().trim();
   let ventas=STATE.ventas.filter(v=>v.tipo==='venta'&&inPeriod(v.fecha,_ventasPeriod));
-  // Scope: non-admins only see their own ventas
+  ventas.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0));
+  // Scope: non-admins see their own ventas + directas from ERP for their clients
   if(!esAdminOSupervisor()){
     const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
-    ventas=ventas.filter(v=>(v.chofer&&(v.chofer===me||v.chofer===mu))||(v.creadoPor&&(v.creadoPor===me||v.creadoPor===mu)));
+    const misClientesIds=new Set(STATE.clientes.map(cl=>String(cl.id)));
+    ventas=ventas.filter(v=>{
+      // Show ERP direct ventas if client is in this chofer's portfolio
+      if(v.fuente==='directa'&&v.clienteId&&misClientesIds.has(String(v.clienteId))) return true;
+      // Own ventas
+      if(v.chofer&&(v.chofer===me||v.chofer===mu)) return true;
+      if(v.creadoPor&&(v.creadoPor===me||v.creadoPor===mu)) return true;
+      // Route clients
+      if(v.clienteId&&clienteEstaEnMiRuta(v.clienteId)) return true;
+      return false;
+    });
   }
   if(_ventasFilter==='pendiente') ventas=ventas.filter(v=>v.estado!=='recibido');
   else if(_ventasFilter==='recibido') ventas=ventas.filter(v=>v.estado==='recibido');
@@ -1515,6 +1601,7 @@ function renderVentas(){
     items.forEach(v=>{
       const d = fmtDateShort(v.fecha);
       const estado = v.estado==='recibido'?'<span class="badge badge-green">Recibido</span>':'<span class="badge badge-gray">No recibido</span>';
+      const esDirecta = v.fuente==='directa';
       // Check if there's a pending delete request for this venta
       const solsLocales = (STATE._misSolicitudes||[]);
       const pendDel = solsLocales.find(s=>s.tipo==='eliminar_venta'&&(s.ventaId===v.id||s.ventaNum===v.numero)&&s.estado==='pendiente');
@@ -1522,7 +1609,7 @@ function renderVentas(){
       html+=`<div class="doc-item" onclick="abrirVenta('${v.id}')" style="${pendDel?'background:var(--amber-bg);':''}">
         <div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div>
         <div class="doc-info">
-          <div class="doc-num">${esc(v.numero||'')} &nbsp;${estado}${pendDel?'<span class="badge badge-amber" style="font-size:9px">⏳ Eliminación pendiente</span>':''}</div>
+          <div class="doc-num">${esc(v.numero||'')} &nbsp;${estado}${esDirecta?'<span class="badge" style="background:#1abc9c;color:white;font-size:9px">ERP</span>':''}${pendDel?'<span class="badge badge-amber" style="font-size:9px">⏳ Eliminación pendiente</span>':''}</div>
           <div class="doc-client">${esc(v.clienteNombre||'Sin cliente')}</div>
         </div>
         <div class="doc-right">
@@ -1587,6 +1674,129 @@ function calcTotales(){
   const total = Math.max(0, subtotal+ivaTotal+iepsTotal-desc+ajuste);
   const taxLines = Object.entries(taxMap).map(([label,monto])=>({label,monto}));
   return {subtotal,ivaTotal,iepsTotal,desc,ajuste,total,taxLines};
+}
+
+
+// ─── SOLICITUDES (chofer) ────────────────────────────────────────────────
+function renderSolicitudes(){
+  const cont = document.getElementById('solicitudes-content'); if(!cont) return;
+  // Load from STATE._misSolicitudes (loaded at startup from Firebase)
+  const todas = STATE._misSolicitudes||[];
+  const enRutaIds = new Set(getClientesEnRuta());
+
+  // Filter to active route clients + own solicitudes
+  const sols = esAdminOSupervisor() ? todas : todas.filter(s=>{
+    if(s.estado==='pendiente') return true; // show all pending
+    if(s.clienteId && enRutaIds.has(String(s.clienteId))) return true;
+    const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
+    return s.solicitante===me||s.solicitante===mu||s.creadoPor===me||s.creadoPor===mu;
+  });
+
+  const pendientes = sols.filter(s=>s.estado==='pendiente');
+  const aprobadas  = sols.filter(s=>s.estado==='aprobada');
+  const rechazadas = sols.filter(s=>s.estado==='rechazada');
+  const canceladas = sols.filter(s=>s.estado==='cancelada_por_chofer');
+
+  const tab = STATE._solTab||'pendientes';
+  const tabBtn=(t,l,n)=>`<button class="tab-btn ${tab===t?'active':''}" onclick="STATE._solTab='${t}';renderSolicitudes()">${l}${n?` <span style="background:var(--red);color:white;border-radius:8px;padding:0 5px;font-size:10px">${n}</span>`:''}</button>`;
+
+  // Update nav badge
+  const icon = document.getElementById('sol-nav-icon');
+  if(icon) icon.textContent = pendientes.length>0?'📋🔴':'📋';
+
+  const lista = tab==='pendientes'?pendientes:tab==='aprobadas'?aprobadas:tab==='rechazadas'?rechazadas:canceladas;
+
+  cont.innerHTML=`
+    <div style="display:flex;gap:6px;overflow-x:auto;padding:12px 16px 0;-webkit-overflow-scrolling:touch">
+      ${tabBtn('pendientes','⏳ Pendientes',pendientes.length)}
+      ${tabBtn('aprobadas','✅ Aprobadas')}
+      ${tabBtn('rechazadas','❌ Rechazadas',rechazadas.length)}
+      ${tabBtn('canceladas','🚫 Canceladas')}
+    </div>
+    <div style="padding:12px 16px">
+      ${!tieneSinRuta()&&pendientes.length===0&&tab==='pendientes'?`<div style="text-align:center;padding:40px;color:var(--text2)">✓ Sin solicitudes pendientes</div>`:''}
+      ${tieneSinRuta()&&tab==='pendientes'?bannerSinRuta('solicitudes'):''}
+      ${lista.map(s=>renderSolicitudCard(s)).join('')}
+    </div>`;
+}
+
+function renderSolicitudCard(s){
+  const tipoLabel={
+    eliminar_venta:'Eliminación de venta',
+    eliminar_pago:'Eliminación de pago',
+    eliminar_nc:'Eliminación de NC',
+    eliminar_nota_credito:'Eliminación de NC',
+    aumento_credito:'Aumento de crédito',
+    cancelada_por_chofer:'Cancelada por ti'
+  }[s.tipo]||s.tipo||'Solicitud';
+
+  const estadoStyle={
+    pendiente:'background:var(--amber-bg);border-color:var(--amber)',
+    aprobada:'background:#eafaf1;border-color:var(--green)',
+    rechazada:'background:#fdf2f2;border-color:var(--red)',
+    cancelada_por_chofer:'background:var(--bg2);border-color:var(--border)'
+  }[s.estado]||'';
+
+  const estadoBadge={
+    pendiente:'<span style="background:var(--amber);color:white;border-radius:6px;padding:2px 8px;font-size:10px">⏳ Pendiente</span>',
+    aprobada:'<span style="background:var(--green);color:white;border-radius:6px;padding:2px 8px;font-size:10px">✅ Aprobada</span>',
+    rechazada:'<span style="background:var(--red);color:white;border-radius:6px;padding:2px 8px;font-size:10px">❌ Rechazada</span>',
+    cancelada_por_chofer:'<span style="background:var(--text2);color:white;border-radius:6px;padding:2px 8px;font-size:10px">🚫 Cancelada</span>'
+  }[s.estado]||'';
+
+  const monto = s.ventaMonto||s.pagoMonto||s.ncMonto||s.montoSolicitado||0;
+  const ref = s.ventaNum||s.pagoNum||s.ncNum||s.ventaId||s.pagoId||s.ncId||'';
+  const fecha = (s.fecha||'').slice(0,10);
+
+  return `<div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;${estadoStyle}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div>
+        <div style="font-size:13px;font-weight:600">${tipoLabel}</div>
+        ${ref?`<div style="font-size:11px;color:var(--text2)">${esc(ref)}</div>`:''}
+      </div>
+      <div>${estadoBadge}</div>
+    </div>
+    ${s.clienteNombre?`<div style="font-size:12px;margin-bottom:4px">Cliente: <strong>${esc(s.clienteNombre)}</strong></div>`:''}
+    ${monto?`<div style="font-size:12px;margin-bottom:4px">Monto: <strong>$${fmt(monto)}</strong></div>`:''}
+    ${s.motivo?`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">Motivo: ${esc(s.motivo)}</div>`:''}
+    ${s.motivoRechazo?`<div style="font-size:12px;color:var(--red);margin-bottom:4px">Razón de rechazo: <strong>${esc(s.motivoRechazo)}</strong></div>`:''}
+    <div style="font-size:10px;color:var(--text3)">${fecha}</div>
+    ${s.estado==='pendiente'?`<div style="margin-top:10px">
+      <button class="btn btn-full" style="color:var(--amber);border-color:var(--amber);font-size:12px"
+        onclick="cancelarSolicitudChofer('${s.id}')">Cancelar solicitud</button>
+    </div>`:''}
+  </div>`;
+}
+
+async function cancelarSolicitudChofer(solId){
+  if(!confirm('¿Cancelar esta solicitud?')) return;
+  if(_db&&_fbFs){
+    try{
+      const{doc,setDoc}=_fbFs;
+      await setDoc(doc(_db,'solicitudes',solId),{
+        estado:'cancelada_por_chofer',
+        canceladaEn:new Date().toISOString()
+      },{merge:true});
+    }catch(e){}
+  }
+  STATE._misSolicitudes=(STATE._misSolicitudes||[]).map(s=>
+    s.id===solId?{...s,estado:'cancelada_por_chofer'}:s
+  );
+  renderSolicitudes();
+  showToast('Solicitud cancelada');
+}
+
+// Reload solicitudes from Firebase
+async function recargarSolicitudes(){
+  if(!_db||!_fbFs) return;
+  try{
+    const{collection,getDocs}=_fbFs;
+    const me=STATE.user?.email||STATE.user?.username||'';
+    if(!me) return;
+    const snap=await getDocs(collection(_db,'solicitudes'));
+    STATE._misSolicitudes=snap.docs.map(d=>({...d.data(),id:d.id}))
+      .filter(s=>s.solicitante===me||s.creadoPor===me);
+  }catch{}
 }
 
 function abrirFormVenta(){
@@ -2096,6 +2306,7 @@ function renderPagos(){
   const tipoBtn=document.getElementById('pagos-period-tipo-btn');
   if(tipoBtn) tipoBtn.textContent=periodTipoLabel(_pagosPeriod.tipo);
   let pagos=STATE.pagos.filter(p=>inPeriod(p.fecha,_pagosPeriod));
+  pagos.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0));
   if(_pagosFilter==='efectivo') pagos=pagos.filter(p=>p.metodo==='efectivo');
   else if(_pagosFilter==='banco') pagos=pagos.filter(p=>p.metodo==='banco');
   const total=pagos.reduce((s,p)=>s+(p.monto||0),0);
@@ -2107,9 +2318,68 @@ function renderPagos(){
   }
   list.innerHTML=pagos.map(p=>{
     const d=fmtDateShort(p.fecha);
-    const solNCPend=(STATE._misSolicitudes||[]).find(s=>(s.tipo==='eliminar_nc'||s.tipo==='eliminar_nota_credito')&&(s.ncId===n.id||s.ncNum===n.numero)&&s.estado==='pendiente');
-    return `<div class="doc-item" style="${solNCPend?'background:var(--amber-bg);':''}"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div><div style="display:flex;gap:3px;margin-top:4px"><button onclick="event.stopPropagation();imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-sm" style="font-size:11px">🖨</button><button onclick="event.stopPropagation();generarPDFPagoById('${p.id||p.numero}')" class="btn btn-sm" style="font-size:11px">📄</button></div></div></div>`;
+    const solPagoPend=(STATE._misSolicitudes||[]).find(s=>s.tipo==='eliminar_pago'&&(s.pagoId===p.id||s.pagoNum===p.numero)&&s.estado==='pendiente');
+    return `<div class="doc-item" onclick="abrirDetallePago('${p.id||p.numero}')" style="${solPagoPend?'background:var(--amber-bg);':''}"><div class="doc-date"><div class="doc-date-day">${d.day}</div><div class="doc-date-mon">${d.mon}</div></div><div class="doc-info"><div class="doc-num">#${p.numero||''} <span class="badge ${p.metodo==='banco'?'badge-blue':'badge-green'}">${p.metodo==='banco'?'Banco':'Efectivo'}</span>${p.pendienteConfirmacion?' <span class="badge badge-amber">Pendiente</span>':''}${solPagoPend?'<span class="badge badge-amber" style="font-size:9px">⏳ Eliminación pendiente</span>':''}</div><div class="doc-client">${esc(p.clienteNombre||'')}</div></div><div class="doc-right"><div class="doc-total text-green">MXN ${fmt(p.monto)}</div><div style="display:flex;gap:3px;margin-top:4px"><button onclick="event.stopPropagation();imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="btn btn-sm" style="font-size:11px">🖨</button><button onclick="event.stopPropagation();generarPDFPagoById('${p.id||p.numero}')" class="btn btn-sm" style="font-size:11px">📄</button></div></div></div>`;
   }).join('');
+}
+
+function abrirDetallePago(id){
+  const p = STATE.pagos.find(x=>x.id===id||x.numero===id); if(!p) return;
+  const fecha = p.fecha?(p.fecha.toDate?p.fecha.toDate():new Date(p.fecha)).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}):'—';
+  const solPend = (STATE._misSolicitudes||[]).find(s=>s.tipo==='eliminar_pago'&&(s.pagoId===p.id||s.pagoNum===p.numero)&&s.estado==='pendiente');
+  const deleteBtn = (()=>{
+    if(solPend) return `<button class="btn btn-full" style="color:var(--amber);border-color:var(--amber);background:var(--amber-bg)" onclick="cancelarSolicitudEliminarPago('${solPend.id}')">⏳ Cancelar solicitud de eliminación</button>`;
+    if(puedoHacer('pagos','editar')) return `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="eliminarPagoDirecto('${p.id}')">🗑 Eliminar pago</button>`;
+    return `<button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="solicitarEliminarPago('${p.id}')">Solicitar eliminación</button>`;
+  })();
+  openSheet(`<div class="sheet-title">Detalle de pago</div>
+    <div class="sheet-body">
+      <div class="detail-row"><span style="color:var(--text2)">Número</span><span>#${esc(p.numero||'')}</span></div>
+      <div class="detail-row"><span style="color:var(--text2)">Cliente</span><span>${esc(p.clienteNombre||'—')}</span></div>
+      <div class="detail-row"><span style="color:var(--text2)">Monto</span><span style="font-size:18px;font-weight:700;color:var(--green)">MXN ${fmt(p.monto||0)}</span></div>
+      <div class="detail-row"><span style="color:var(--text2)">Método</span><span>${p.metodo==='banco'?'🏦 Transferencia bancaria':'💵 Efectivo'}</span></div>
+      <div class="detail-row"><span style="color:var(--text2)">Fecha</span><span>${fecha}</span></div>
+      ${p.notas?`<div class="detail-row"><span style="color:var(--text2)">Notas</span><span>${esc(p.notas)}</span></div>`:''}
+      ${p.pendienteConfirmacion?'<div class="alert" style="margin-top:8px;background:var(--amber-bg);border-color:var(--amber)">⏳ Pago banco pendiente de confirmación</div>':''}
+      <div style="padding:12px 0;display:flex;gap:8px">
+        <button class="btn" onclick="imprimirPago(${JSON.stringify(p).replace(/"/g,'&quot;')})">🖨</button>
+        <button class="btn" onclick="generarPDFPagoById('${p.id||p.numero}')">📄 PDF</button>
+      </div>
+      <div style="padding-bottom:8px">${deleteBtn}</div>
+    </div>
+    <div class="action-bar"><button class="btn" onclick="closeSheet()">Cerrar</button></div>`,true);
+}
+
+async function eliminarPagoDirecto(id){
+  if(!confirm('¿Eliminar este pago? Esta acción no se puede deshacer.')) return;
+  if(_db&&_fbFs){
+    try{ const{doc,deleteDoc}=_fbFs; await deleteDoc(doc(_db,'pagos',id)); }catch(e){}
+  }
+  STATE.pagos = STATE.pagos.filter(p=>p.id!==id);
+  cacheData(); closeSheet(); renderPagos(); showToast('Pago eliminado');
+}
+
+async function solicitarEliminarPago(id){
+  const p = STATE.pagos.find(x=>x.id===id); if(!p) return;
+  const motivo = prompt('¿Motivo para solicitar eliminación del pago?'); if(!motivo) return;
+  const sol={tipo:'eliminar_pago',pagoId:id,pagoNum:p.numero||'',clienteNombre:p.clienteNombre||'',pagoMonto:p.monto||0,
+    motivo,solicitante:STATE.user?.email,chofer:STATE.user?.nombre||STATE.user?.username||STATE.user?.email,
+    ruta:STATE._rutaActivaNombre||'',fecha:new Date().toISOString(),estado:'pendiente'};
+  try{
+    const{collection,addDoc}=_fbFs;
+    const ref = await addDoc(collection(_db,'solicitudes'),sol);
+    (STATE._misSolicitudes=STATE._misSolicitudes||[]).push({...sol,id:ref.id});
+  }catch(e){ showToast('Sin conexión — solicitud guardada localmente'); }
+  closeSheet(); renderPagos(); showToast('Solicitud enviada al supervisor');
+}
+
+async function cancelarSolicitudEliminarPago(solId){
+  if(!confirm('¿Cancelar esta solicitud de eliminación?')) return;
+  if(_db&&_fbFs){
+    try{ const{doc,setDoc}=_fbFs; await setDoc(doc(_db,'solicitudes',solId),{estado:'cancelada_por_chofer',canceladaEn:new Date().toISOString()},{merge:true}); }catch(e){}
+  }
+  STATE._misSolicitudes=(STATE._misSolicitudes||[]).filter(s=>s.id!==solId);
+  closeSheet(); renderPagos(); showToast('Solicitud cancelada');
 }
 
 function nuevoPago(){
@@ -2380,11 +2650,22 @@ function setNCTab(tab, btn){
 function renderNC(){
   const list=document.getElementById('nc-list'); if(!list) return;
   const q=(document.getElementById('nc-search')?.value||'').toLowerCase().trim();
-  let notas=STATE.notas.filter(n=>n.tipo===STATE.ncTab);
-  // Scope: non-admins only see their own NCs
+  let notas=STATE.ncTab==='directa'?STATE.notas.filter(n=>n.fuente==='directa'):STATE.notas.filter(n=>n.tipo===STATE.ncTab&&n.fuente!=='directa');
+  notas.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0));
+  // Scope: non-admins see their own NCs + NC directas for their clients
   if(!esAdminOSupervisor()){
     const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
-    notas=notas.filter(n=>{const a=n.chofer||n.creadoPor||''; return !a||a===me||a===mu;});
+    const misClientesIds=new Set(STATE.clientes.map(cl=>String(cl.id)));
+    notas=notas.filter(n=>{
+      // Always show directas from ERP if client belongs to this chofer's portfolio
+      if(n.fuente==='directa'&&n.clienteId&&misClientesIds.has(String(n.clienteId))) return true;
+      // Otherwise scope to own records or route clients
+      const a=n.chofer||n.creadoPor||'';
+      if(!a||a===me||a===mu) return true;
+      // Also show if client is in active route
+      if(n.clienteId&&clienteEstaEnMiRuta(n.clienteId)) return true;
+      return false;
+    });
   }
   if(q) notas=notas.filter(n=>(n.clienteNombre||'').toLowerCase().includes(q)||(n.numero||'').toLowerCase().includes(q));
   notas=notas.slice(0,50);
@@ -2401,24 +2682,110 @@ function renderNC(){
 
 function nuevaNC(){
   const tipo=STATE.ncTab;
-  const motivos=tipo==='devolucion'?['Producto dañado','Producto vencido','Error en pedido','No solicitado','Calidad no aceptable','Otro']:['Producto aplastado','Merma en ruta','Producto vencido','Daño por temperatura','Otro'];
   const num=nextNum('NC',STATE.notas,'numero');
-  const html=`<div class="sheet-title">Nueva NC — ${tipo==='devolucion'?'Devolución':'Merma'}</div><div class="sheet-body">
-    <div class="form-group"><div class="form-label">Cliente</div><input class="form-input" id="nc-cliente" list="nc-cli-list" placeholder="Buscar cliente..."><datalist id="nc-cli-list">${STATE.clientes.map(c=>`<option value="${esc(c.nombre)}"></option>`).join('')}</datalist></div>
-    <div class="form-group"><div class="form-label">Motivo</div><select class="form-input form-select" id="nc-motivo">${motivos.map(m=>`<option value="${m}">${m}</option>`).join('')}</select></div>
-    <div class="form-group"><div class="form-label">Monto (MXN)</div><input type="number" id="nc-monto" class="form-input" placeholder="0.00" step="0.01" style="font-size:20px;font-weight:700;text-align:right"></div>
-    <div class="form-group"><div class="form-label">Notas</div><textarea class="form-input" id="nc-nota" rows="2" style="resize:none" placeholder="Descripción adicional..."></textarea></div>
+  const motivos=tipo==='devolucion'
+    ?['Producto dañado','Producto vencido','Error en pedido','No solicitado','Calidad no aceptable','Otro']
+    :['Producto aplastado','Merma en ruta','Producto vencido','Daño por temperatura','Otro'];
+  // Only route clients for ventas/NC, but allow all for admin
+  const allowAll=esAdminOSupervisor();
+  const enRuta=getClientesEnRuta();
+  const cliDisp=STATE.clientes.filter(cl=>cl.activo!==false&&(allowAll||!enRuta.length||enRuta.includes(String(cl.id))));
+  const prods=STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo');
+  const html=`<div class="sheet-title">Nueva NC — ${tipo==='devolucion'?'Devolución':'Merma'}</div><div class="sheet-body" style="padding-bottom:120px">
+    <div class="form-group">
+      <div class="form-label">Cliente</div>
+      <input class="form-input" id="nc-cli-search" placeholder="Buscar cliente..." oninput="ncFilterClis(this.value)" autocomplete="off">
+      <div id="nc-cli-results" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:160px;overflow-y:auto;display:none"></div>
+      <input type="hidden" id="nc-cliente-id">
+      <div id="nc-cliente-sel" style="padding:6px 0;font-size:13px;color:var(--accent);font-weight:600;display:none"></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Motivo</div>
+      <select class="form-input form-select" id="nc-motivo-sel" onchange="if(this.value==='Otro'){document.getElementById('nc-motivo-custom').style.display='';document.getElementById('nc-motivo-custom').focus();}else{document.getElementById('nc-motivo-custom').style.display='none';}">
+        ${motivos.filter(m=>m!=='Otro').map(m=>`<option value="${m}">${m}</option>`).join('')}
+        <option value="Otro">Otro (especificar)</option>
+      </select>
+      <input class="form-input" id="nc-motivo-custom" placeholder="Describe el motivo..." style="margin-top:6px;display:none">
+    </div>
+    <div class="form-group">
+      <div class="form-label" style="margin-bottom:8px">Productos (opcional — para calcular monto)</div>
+      <input class="form-input" id="nc-prod-search" placeholder="Buscar producto..." oninput="ncFilterProds(this.value)" style="margin-bottom:8px">
+      <div id="nc-prod-list" style="max-height:200px;overflow-y:auto">
+        ${prods.slice(0,30).map(p=>`<div class="nc-prod-row" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;font-size:13px"><div>${esc(p.nombre)}</div><div style="font-size:11px;color:var(--text2)">${esc(p.sku||'')} · $${fmt(p.precio||0)}</div></div>
+          <input type="number" min="0" step="0.5" value="0" id="nc-prod-${p.id}" class="form-input" style="width:70px;text-align:right;padding:4px 8px" oninput="ncRecalc()">
+          <div style="font-size:12px;color:var(--red);min-width:60px;text-align:right" id="nc-subtot-${p.id}">$0.00</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group" style="padding:12px 0;border-top:2px solid var(--border);margin-top:8px">
+      <div class="form-label">Monto total NC (MXN)</div>
+      <input type="number" id="nc-monto" class="form-input" placeholder="0.00" step="0.01" style="font-size:22px;font-weight:700;text-align:right" oninput="document.getElementById('nc-auto-total').textContent=''">
+      <div id="nc-auto-total" style="font-size:11px;color:var(--text2);padding-top:4px"></div>
+    </div>
+    <div class="form-group"><div class="form-label">Notas adicionales</div><textarea class="form-input" id="nc-nota" rows="2" style="resize:none" placeholder="Observaciones..."></textarea></div>
     <div class="action-bar"><button class="btn" onclick="closeSheet()">Cancelar</button><button class="btn btn-red" onclick="guardarNC('${num}','${tipo}')">Crear NC</button></div>
   </div>`;
   openSheet(html);
+  // Init client search
+  ncFilterClis('');
+}
+
+function ncFilterClis(q){
+  const allowAll=esAdminOSupervisor();
+  const enRuta=getClientesEnRuta();
+  const res=document.getElementById('nc-cli-results'); if(!res) return;
+  const clis=STATE.clientes.filter(cl=>cl.activo!==false&&(allowAll||!enRuta.length||enRuta.includes(String(cl.id)))&&(!q||cl.nombre?.toLowerCase().includes(q.toLowerCase()))).slice(0,25);
+  if(!clis.length){ res.style.display='none'; return; }
+  res.style.display='';
+  res.innerHTML=clis.map(cl=>`<div style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border)" ontouchstart="this.style.background='var(--bg2)'" ontouchend="ncSetCli('${cl.id}','${esc(cl.nombre)}')" onclick="ncSetCli('${cl.id}','${esc(cl.nombre)}')">${esc(cl.nombre)}<span style="float:right;font-size:11px;color:var(--text2)">Saldo: $${fmt(cl.saldo||0)}</span></div>`).join('');
+}
+
+function ncSetCli(id,nombre){
+  document.getElementById('nc-cli-search').value=nombre;
+  document.getElementById('nc-cliente-id').value=id;
+  const sel=document.getElementById('nc-cliente-sel');
+  sel.textContent='✓ '+nombre; sel.style.display='';
+  document.getElementById('nc-cli-results').style.display='none';
+}
+
+function ncFilterProds(q){
+  const prods=STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo'&&(!q||p.nombre?.toLowerCase().includes(q.toLowerCase())||p.sku?.toLowerCase().includes(q.toLowerCase()))).slice(0,30);
+  const list=document.getElementById('nc-prod-list'); if(!list) return;
+  list.innerHTML=prods.map(p=>`<div class="nc-prod-row" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+    <div style="flex:1;font-size:13px"><div>${esc(p.nombre)}</div><div style="font-size:11px;color:var(--text2)">${esc(p.sku||'')} · $${fmt(p.precio||0)}</div></div>
+    <input type="number" min="0" step="0.5" value="0" id="nc-prod-${p.id}" class="form-input" style="width:70px;text-align:right;padding:4px 8px" oninput="ncRecalc()">
+    <div style="font-size:12px;color:var(--red);min-width:60px;text-align:right" id="nc-subtot-${p.id}">$0.00</div>
+  </div>`).join('');
+}
+
+function ncRecalc(){
+  const prods=STATE.productos.filter(p=>p.activo!==false&&p.tipo!=='insumo');
+  let total=0;
+  prods.forEach(p=>{
+    const cant=parseFloat(document.getElementById('nc-prod-'+p.id)?.value)||0;
+    const sub=cant*(p.precio||0);
+    total+=sub;
+    const el=document.getElementById('nc-subtot-'+p.id);
+    if(el) el.textContent='$'+fmt(sub);
+  });
+  if(total>0){
+    const montoEl=document.getElementById('nc-monto');
+    if(montoEl) montoEl.value=total.toFixed(2);
+    const autoEl=document.getElementById('nc-auto-total');
+    if(autoEl) autoEl.textContent='Calculado desde productos: $'+fmt(total);
+  }
 }
 
 async function guardarNC(num,tipo){
-  const clienteNombre=document.getElementById('nc-cliente')?.value.trim();
+  const cliId=document.getElementById('nc-cliente-id')?.value;
+  const clienteNombre=document.getElementById('nc-cli-search')?.value.trim();
   const monto=parseFloat(document.getElementById('nc-monto')?.value)||0;
-  const motivo=document.getElementById('nc-motivo')?.value;
+  const motivoSel=document.getElementById('nc-motivo-sel')?.value||'';
+  const motivoCustom=document.getElementById('nc-motivo-custom')?.value.trim()||'';
+  const motivo=motivoSel==='Otro'?motivoCustom:motivoSel;
   const nota=document.getElementById('nc-nota')?.value;
-  const cli=STATE.clientes.find(c=>c.nombre===clienteNombre);
+  const cli=cliId?STATE.clientes.find(c=>String(c.id)===cliId):STATE.clientes.find(c=>c.nombre===clienteNombre);
   if(!clienteNombre){ showToast('Selecciona un cliente'); return; }
   if(monto<=0){ showToast('Ingresa el monto'); return; }
   const nc={numero:num,tipo,clienteId:cli?.id||null,clienteNombre,monto,motivo,nota,aplicada:false,fecha:new Date().toISOString(),creadoPor:STATE.user?.email};
@@ -2556,13 +2923,15 @@ async function guardarGasto(){
     const fotoEl=document.getElementById('g-foto');
     if(!fotoEl?.files?.length){ showToast('La foto es obligatoria para parquímetros'); return; }
     if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'parquimetro',descripcion:document.getElementById('g-parq-desc')?.value.trim()||'Parquímetro',monto,fecha,validado:false,creadoPor:STATE.user?.email};
+    gasto={tipo:'parquimetro',descripcion:document.getElementById('g-parq-desc')?.value.trim()||'Parquímetro',monto,fecha,validado:false,creadoPor:STATE.user?.email,foto:_fotoGastoBase64||null};
   } else {
     const monto=parseFloat(document.getElementById('g-monto2')?.value)||0;
     const desc=document.getElementById('g-desc')?.value.trim();
     if(monto<=0){ showToast('Ingresa el monto'); return; }
     gasto={tipo:'otro',descripcion:desc,monto,fecha,validado:false,creadoPor:STATE.user?.email};
   }
+  // Attach foto if available and not already set
+  if(_fotoGastoBase64 && !gasto.foto) gasto.foto = _fotoGastoBase64;
   try{
     const { collection, addDoc } = _fbFs;
     const ref=await addDoc(collection(_db,'gastos'),gasto);
@@ -3258,6 +3627,85 @@ function toggleFiltroRutaActiva(){
   renderClientes();
 }
 
+function nuevoClienteChofer(){
+  const rutas = STATE.rutas||[];
+  openSheet(`<div class="sheet-title">+ Nuevo cliente</div>
+    <div class="sheet-body" style="padding-bottom:120px">
+      <div class="form-group">
+        <div class="form-label">Nombre del negocio / cliente <span style="color:var(--red)">*</span></div>
+        <input class="form-input" id="nc2-nombre" placeholder="Ej: Abarrotes La Esperanza" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Teléfono / WhatsApp</div>
+        <input class="form-input" id="nc2-tel" type="tel" placeholder="52155..." inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Dirección</div>
+        <input class="form-input" id="nc2-dir" placeholder="Calle, número, colonia...">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Email (opcional)</div>
+        <input class="form-input" id="nc2-email" type="email" placeholder="correo@ejemplo.com">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Ruta (opcional)</div>
+        <select class="form-input form-select" id="nc2-ruta">
+          <option value="">— Sin ruta asignada —</option>
+          ${rutas.map(r=>`<option value="${r.id}">${esc(r.nombre)}</option>`).join('')}
+          ${STATE._rutaActivaNombre?`<option value="${STATE._rutaActivaId||''}" selected>✓ ${esc(STATE._rutaActivaNombre)} (ruta activa)</option>`:''}
+        </select>
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:12px 16px;margin:8px 0;font-size:12px;color:var(--text2)">
+        ℹ️ El cliente se creará con <strong>SCi = $600</strong> por defecto. Puedes ajustarlo después desde el ERP.
+      </div>
+      <div class="action-bar">
+        <button class="btn" onclick="closeSheet()">Cancelar</button>
+        <button class="btn btn-primary btn-full" onclick="guardarNuevoClienteChofer()">Crear cliente</button>
+      </div>
+    </div>`);
+}
+
+async function guardarNuevoClienteChofer(){
+  const nombre = document.getElementById('nc2-nombre')?.value.trim();
+  if(!nombre){ showToast('El nombre es obligatorio'); return; }
+  const tel   = document.getElementById('nc2-tel')?.value.trim()||null;
+  const dir   = document.getElementById('nc2-dir')?.value.trim()||null;
+  const email = document.getElementById('nc2-email')?.value.trim()||null;
+  const rutaId= document.getElementById('nc2-ruta')?.value||null;
+  const ruta  = STATE.rutas?.find(r=>String(r.id)===String(rutaId));
+  // Check duplicate
+  if(STATE.clientes.some(cl=>cl.nombre?.toLowerCase()===nombre.toLowerCase())){
+    showToast('Ya existe un cliente con ese nombre'); return;
+  }
+  const nuevoId = 'cli_' + Date.now();
+  const cli = {
+    id: nuevoId,
+    nombre,
+    telefono: tel,
+    direccion: dir,
+    email,
+    ruta: rutaId||null,
+    rutaNombre: ruta?.nombre||null,
+    saldo: 0,
+    limiteCredito: 600,   // SCi default
+    activo: true,
+    creadoPor: STATE.user?.email||STATE.user?.username||'chofer',
+    creadoEn: new Date().toISOString()
+  };
+  try{
+    if(_db&&_fbFs){
+      const{collection,addDoc}=_fbFs;
+      const ref = await addDoc(collection(_db,'clientes'),cli);
+      cli.id = ref.id;
+    }
+  }catch(e){ addToQueue({type:'add',col:'clientes',id:nuevoId,data:cli}); }
+  STATE.clientes.push(cli);
+  localStorage.setItem('cache_clientes', JSON.stringify(STATE.clientes));
+  closeSheet();
+  renderClientes();
+  showToast('✓ Cliente creado');
+}
+
 function abrirFiltroRutas(){
   const rutas=[...new Set(STATE.clientes.filter(c=>c.activo!==false).map(c=>c.rutaNombre||c._rutaNombre||'Sin ruta'))].sort((a,b)=>a.localeCompare(b,'es'));
   const html=`<div class="sheet-title">Filtrar por ruta</div><div class="sheet-body">
@@ -3844,6 +4292,29 @@ function imprimirTicketNCById(id){
   const nc = STATE.notas.find(n=>n.id===id||n.numero===id); if(!nc) return;
   imprimirTicketNC(nc);
 }
+async function eliminarNCDirecto(id){
+  if(!confirm('¿Eliminar esta NC? Esta acción no se puede deshacer.')) return;
+  if(_db&&_fbFs){
+    try{ const{doc,deleteDoc}=_fbFs; await deleteDoc(doc(_db,'notas_credito',id)); }catch(e){}
+  }
+  STATE.notas = STATE.notas.filter(n=>n.id!==id);
+  cacheData(); closeSheet(); renderNC(); showToast('NC eliminada');
+}
+
+async function solicitarEliminarNC(id){
+  const nc = STATE.notas.find(x=>x.id===id); if(!nc) return;
+  const motivo = prompt('¿Motivo para solicitar eliminación de esta NC?'); if(!motivo) return;
+  const sol={tipo:'eliminar_nc',ncId:id,ncNum:nc.numero||'',clienteNombre:nc.clienteNombre||'',ncMonto:nc.monto||0,ncTipo:nc.tipo||'',
+    motivo,solicitante:STATE.user?.email,chofer:STATE.user?.nombre||STATE.user?.username||STATE.user?.email,
+    ruta:STATE._rutaActivaNombre||'',fecha:new Date().toISOString(),estado:'pendiente'};
+  try{
+    const{collection,addDoc}=_fbFs;
+    const ref = await addDoc(collection(_db,'solicitudes'),sol);
+    (STATE._misSolicitudes=STATE._misSolicitudes||[]).push({...sol,id:ref.id});
+  }catch(e){ showToast('Sin conexión — solicitud guardada localmente'); }
+  closeSheet(); renderNC(); showToast('Solicitud enviada al supervisor');
+}
+
 function generarPDFNCById(id){
   const nc = STATE.notas.find(n=>n.id===id||n.numero===id); if(!nc) return;
   generarPDFNC(nc);
