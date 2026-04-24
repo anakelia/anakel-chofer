@@ -967,7 +967,7 @@ async function loadAllData(){
     STATE.notas = notasSnap.docs.map(d=>({id:d.id,...d.data()}));
     STATE.gastos = gastosSnap.docs.map(d=>({id:d.id,...d.data()}));
     // Also load rutas for client name display
-    try{ const rutasSnap=await getDocs(collection(_db,'rutas')); STATE.rutas=rutasSnap.docs.map(d=>({id:d.id,...d.data()})); }catch{}
+    try{ const rutasSnap=await getDocs(collection(_db,'rutas')); STATE.rutas=rutasSnap.docs.map(d=>({id:d.id,...d.data()})); }catch(e){}
     // Load my solicitudes (so I can see which are pending)
     try{
       const me=STATE.user?.email||STATE.user?.username||'';
@@ -976,7 +976,7 @@ async function loadAllData(){
         STATE._misSolicitudes=solSnap.docs.map(d=>({...d.data(),id:d.id}))
           .filter(s=>s.solicitante===me||s.creadoPor===me);
       }
-    }catch{}
+    }catch(e){}
     // Load inventario from active route (set by ERP)
     try{
       const cached=localStorage.getItem('anakel_inventario_carro');
@@ -1000,16 +1000,16 @@ async function loadAllData(){
         const cc = localStorage.getItem('anakel_clientes_en_ruta');
         if(cc) STATE._clientesEnRuta = JSON.parse(cc);
         const rd2 = localStorage.getItem('anakel_ruta_data');
-        if(rd2) try{ STATE._rutaActivaData = JSON.parse(rd2); }catch{}
+        if(rd2) try{ STATE._rutaActivaData = JSON.parse(rd2); }catch(e){}
       }
-    }catch{}
+    }catch(e){}
     // Load choferes and supervisores for role detection
     try{
       const chofSnap=await getDocs(collection(_db,'choferes'));
       STATE.choferes=chofSnap.docs.map(d=>({id:d.id,...d.data()}));
       const supSnap=await getDocs(collection(_db,'supervisores'));
       STATE.supervisores=supSnap.docs.map(d=>({id:d.id,...d.data()}));
-    }catch{}
+    }catch(e){}
     // Detect user role
     detectarRolUsuario();
     // Apply default credit limit logic
@@ -1787,6 +1787,17 @@ async function cancelarSolicitudChofer(solId){
 }
 
 // Reload solicitudes from Firebase
+async // ── Limpiar cache local del chofer ───────────────────────────
+function limpiarCacheChofer(){
+  ['cache_ventas','cache_pagos','cache_notas','cache_clientes',
+   'anakel_inventario_carro','anakel_clientes_en_ruta','anakel_ruta_data'].forEach(k=>{
+    localStorage.removeItem(k);
+  });
+  STATE.ventas=[];
+  STATE.pagos=[];
+  STATE.notas=[];
+}
+
 async function recargarSolicitudes(){
   if(!_db||!_fbFs) return;
   try{
@@ -1796,7 +1807,7 @@ async function recargarSolicitudes(){
     const snap=await getDocs(collection(_db,'solicitudes'));
     STATE._misSolicitudes=snap.docs.map(d=>({...d.data(),id:d.id}))
       .filter(s=>s.solicitante===me||s.creadoPor===me);
-  }catch{}
+  }catch(e){}
 }
 
 function abrirFormVenta(){
