@@ -2822,6 +2822,7 @@ function renderGastos(){
 }
 
 function nuevoGasto(){
+  _fotoGastoBase64 = null;
   const html=`<div class="sheet-title">Registrar gasto</div><div class="sheet-body">
     <div class="form-group"><div class="form-label">Tipo de gasto</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
@@ -2900,14 +2901,21 @@ function calcGasolina(){
   calc.innerHTML=litros>0?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px"><span>Precio/litro:</span><strong>$${fmt(precioLitro)}</strong><span>IEPS:</span><strong style="color:var(--amber)">$${fmt(iepsTotal)}</strong><span>IVA 16%:</span><strong style="color:var(--amber)">$${fmt(iva)}</strong></div>`:'Ingresa litros y monto para ver impuestos';
 }
 
+let _fotoGastoBase64 = null;
+
 function previewFoto(input){
   const file=input.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=e=>{ const prev=document.getElementById('g-foto-preview'); if(prev) prev.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:8px;margin-top:8px">`; };
+  reader.onload=e=>{
+    _fotoGastoBase64 = e.target.result;
+    const prev=document.getElementById('g-foto-preview');
+    if(prev) prev.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:8px;margin-top:8px">`;
+  };
   reader.readAsDataURL(file);
 }
 
 async function guardarGasto(){
+  try{
   const fecha=document.getElementById('g-fecha')?.value||new Date().toISOString().slice(0,10);
   const tipoActivo=['gasolina','franelero','mantenimiento','parquimetro','otro'].find(t=>document.getElementById('gasto-'+t)?.classList.contains('selected'))||'otro';
   let gasto;
@@ -2961,6 +2969,10 @@ async function guardarGasto(){
     addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto});
     STATE.gastos.unshift(gasto);
     cacheData(); closeSheet(); renderGastos();
+  }
+  }catch(outerErr){
+    console.error('guardarGasto crash:', outerErr);
+    showToast('Error: '+outerErr.message.slice(0,60));
   }
 }
 
