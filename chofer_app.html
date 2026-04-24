@@ -1787,7 +1787,7 @@ async function cancelarSolicitudChofer(solId){
 }
 
 // Reload solicitudes from Firebase
-async // ── Limpiar cache local del chofer ───────────────────────────
+// ── Limpiar cache local del chofer ───────────────────────────
 function limpiarCacheChofer(){
   ['cache_ventas','cache_pagos','cache_notas','cache_clientes',
    'anakel_inventario_carro','anakel_clientes_en_ruta','anakel_ruta_data'].forEach(k=>{
@@ -2943,12 +2943,25 @@ async function guardarGasto(){
   }
   // Attach foto if available and not already set
   if(_fotoGastoBase64 && !gasto.foto) gasto.foto = _fotoGastoBase64;
+  if(!_db || !_fbFs){
+    showToast('Sin conexión — gasto guardado localmente');
+    addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto});
+    STATE.gastos.unshift(gasto);
+    cacheData(); closeSheet(); renderGastos();
+    return;
+  }
   try{
     const { collection, addDoc } = _fbFs;
     const ref=await addDoc(collection(_db,'gastos'),gasto);
     STATE.gastos.unshift({...gasto,id:ref.id});
-  }catch(e){ addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto}); STATE.gastos.unshift(gasto); }
-  cacheData(); closeSheet(); renderGastos(); showToast('Gasto enviado para validar ✓');
+    cacheData(); closeSheet(); renderGastos(); showToast('Gasto enviado para validar ✓');
+  }catch(e){
+    console.error('guardarGasto error:',e);
+    showToast('Error al guardar: '+e.message.slice(0,40));
+    addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto});
+    STATE.gastos.unshift(gasto);
+    cacheData(); closeSheet(); renderGastos();
+  }
 }
 
 // ─── Sheet overlay ──────────────────────────────────────────
