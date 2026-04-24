@@ -2824,7 +2824,7 @@ function renderGastos(){
     const dt=fmtDateShort(g.fecha);
     const estadoBadge = g.validado
       ? '<span class="badge badge-green">✓ Validado</span>'
-      : g.estado==='rechazado'
+      : (g.estado==='rechazado' || (g.fechaValidacion && !g.validado))
         ? '<span class="badge" style="background:#fde8e8;color:#c0392b">✗ Rechazado</span>'
         : '<span class="badge badge-amber">⏳ Pendiente</span>';
     return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(g.tipo==='gasolina'?'⛽ Gasolina':g.tipo||'Gasto')} ${estadoBadge}</div><div class="doc-client">${esc(g.combustible||g.descripcion||'')} ${g.litros?'· '+g.litros+'L':''}</div></div><div class="doc-right"><div class="doc-total">MXN ${fmt(g.monto)}</div>${g.precioLitro?`<div class="doc-balance">$${fmt(g.precioLitro)}/L</div>`:''}</div></div>`;
