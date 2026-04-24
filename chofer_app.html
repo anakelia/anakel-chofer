@@ -1031,6 +1031,8 @@ function loadCachedData(){
     STATE.productos = JSON.parse(localStorage.getItem('cache_productos')||'[]');
     STATE.notas = JSON.parse(localStorage.getItem('cache_notas')||'[]');
     STATE.gastos = JSON.parse(localStorage.getItem('cache_gastos')||'[]');
+    // Refresh gastos in background to get latest estado (rechazado/aprobado)
+    if(_db&&_fbFs){ try{ const{collection,getDocs}=_fbFs; getDocs(collection(_db,'gastos')).then(s=>{ STATE.gastos=s.docs.map(d=>({id:d.id,...d.data()})); localStorage.setItem('cache_gastos',JSON.stringify(STATE.gastos)); if(document.getElementById('page-gastos')?.classList.contains('active')) renderGastos(); }).catch(()=>{}); }catch(e){} }
     renderCurrentPage();
   }catch(e){}
 }
@@ -2818,7 +2820,15 @@ async function guardarNC(num,tipo){
 function renderGastos(){
   const list=document.getElementById('gastos-list'); if(!list) return;
   if(!STATE.gastos.length){ list.innerHTML=`<div class="card" style="margin-top:10px"><div style="padding:40px;text-align:center;color:var(--text3)">Sin gastos. Registra la gasolina y otros gastos de ruta.</div></div>`; return; }
-  list.innerHTML='<div style="background:var(--surface)">'+STATE.gastos.slice(0,30).map(g=>{ const dt=fmtDateShort(g.fecha); return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(g.tipo==='gasolina'?'⛽ Gasolina':g.tipo||'Gasto')} ${g.validado?'<span class="badge badge-green">Validado</span>':'<span class="badge badge-amber">Pendiente</span>'}</div><div class="doc-client">${esc(g.combustible||g.descripcion||'')} ${g.litros?'· '+g.litros+'L':''}</div></div><div class="doc-right"><div class="doc-total">MXN ${fmt(g.monto)}</div>${g.precioLitro?`<div class="doc-balance">$${fmt(g.precioLitro)}/L</div>`:''}</div></div>`; }).join('')+'</div>';
+  list.innerHTML='<div style="background:var(--surface)">'+STATE.gastos.slice(0,30).map(g=>{
+    const dt=fmtDateShort(g.fecha);
+    const estadoBadge = g.validado
+      ? '<span class="badge badge-green">✓ Validado</span>'
+      : g.estado==='rechazado'
+        ? '<span class="badge" style="background:#fde8e8;color:#c0392b">✗ Rechazado</span>'
+        : '<span class="badge badge-amber">⏳ Pendiente</span>';
+    return `<div class="doc-item"><div class="doc-date"><div class="doc-date-day">${dt.day}</div><div class="doc-date-mon">${dt.mon}</div></div><div class="doc-info"><div class="doc-num">${esc(g.tipo==='gasolina'?'⛽ Gasolina':g.tipo||'Gasto')} ${estadoBadge}</div><div class="doc-client">${esc(g.combustible||g.descripcion||'')} ${g.litros?'· '+g.litros+'L':''}</div></div><div class="doc-right"><div class="doc-total">MXN ${fmt(g.monto)}</div>${g.precioLitro?`<div class="doc-balance">$${fmt(g.precioLitro)}/L</div>`:''}</div></div>`;
+  }).join('')+'</div>';
 }
 
 function nuevoGasto(){
