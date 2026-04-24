@@ -649,7 +649,7 @@ let _db, _auth, _fbFs;
 
 async function initFirebase(){
   const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-  const { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+  const { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, getDocsFromServer, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
   const { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
 
   const firebaseConfig = {
@@ -665,7 +665,7 @@ async function initFirebase(){
   const fbApp = apps.length ? apps[0] : initializeApp(firebaseConfig);
   _db = getFirestore(fbApp);
   _auth = getAuth(fbApp);
-  _fbFs = { collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch };
+  _fbFs = { collection, doc, addDoc, setDoc, getDoc, getDocs, getDocsFromServer, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch };
 
   // Auth state listener
   // Offline-first: if we have cached data and a known user, show app immediately
@@ -952,14 +952,18 @@ async function loadAllData(){
   if(!_db) return;
   try{
     const { collection, getDocs, query, orderBy } = _fbFs;
-    const [ventasSnap, pagosSnap, clientesSnap, productosSnap, notasSnap, gastosSnap] = await Promise.all([
+    const [ventasSnap, pagosSnap, clientesSnap, productosSnap, notasSnap] = await Promise.all([
       getDocs(query(collection(_db,'ventas'), orderBy('fecha','desc'))),
       getDocs(query(collection(_db,'pagos'), orderBy('fecha','desc'))),
       getDocs(collection(_db,'clientes')),
       getDocs(collection(_db,'productos')),
       getDocs(query(collection(_db,'notas_credito'), orderBy('fecha','desc'))),
-      getDocs(query(collection(_db,'gastos'), orderBy('fecha','desc'))),
     ]);
+    // Force gastos from server to always get latest estado field
+    const { getDocsFromServer } = _fbFs;
+    const gastosSnap = getDocsFromServer
+      ? await getDocsFromServer(query(collection(_db,'gastos'), orderBy('fecha','desc')))
+      : await getDocs(query(collection(_db,'gastos'), orderBy('fecha','desc')));
     STATE.ventas = ventasSnap.docs.map(d=>({id:d.id,...d.data()}));
     STATE.pagos = pagosSnap.docs.map(d=>({id:d.id,...d.data()}));
     STATE.clientes = clientesSnap.docs.map(d=>({id:d.id,...d.data()}));
