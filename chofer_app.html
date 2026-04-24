@@ -2903,77 +2903,95 @@ function calcGasolina(){
 
 let _fotoGastoBase64 = null;
 
+function comprimirFoto(base64, maxWidth=800, calidad=0.6){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      let w=img.width, h=img.height;
+      if(w>maxWidth){ h=Math.round(h*maxWidth/w); w=maxWidth; }
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg', calidad));
+    };
+    img.onerror=()=>resolve(base64); // fallback sin comprimir
+    img.src=base64;
+  });
+}
+
 function previewFoto(input){
   const file=input.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=e=>{
-    _fotoGastoBase64 = e.target.result;
+  reader.onload=async e=>{
+    const compressed = await comprimirFoto(e.target.result);
+    _fotoGastoBase64 = compressed;
     const prev=document.getElementById('g-foto-preview');
-    if(prev) prev.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:8px;margin-top:8px">`;
+    if(prev) prev.innerHTML=`<img src="${compressed}" style="width:100%;border-radius:8px;margin-top:8px">`;
+    // Show size info
+    const kb=Math.round(compressed.length*0.75/1024);
+    if(prev) prev.innerHTML+=`<div style="font-size:11px;color:var(--text2);margin-top:4px">📷 ${kb}KB comprimida</div>`;
   };
   reader.readAsDataURL(file);
 }
 
 async function guardarGasto(){
-  try{
-  const fecha=document.getElementById('g-fecha')?.value||new Date().toISOString().slice(0,10);
-  const tipoActivo=['gasolina','franelero','mantenimiento','parquimetro','otro'].find(t=>document.getElementById('gasto-'+t)?.classList.contains('selected'))||'otro';
-  let gasto;
+  const fecha = document.getElementById('g-fecha')?.value || new Date().toISOString().slice(0,10);
+  const tipos = ['gasolina','franelero','mantenimiento','parquimetro','otro'];
+  const tipoActivo = tipos.find(t=>document.getElementById('gasto-'+t)?.classList.contains('selected')) || 'otro';
+  let gasto = null;
+
   if(tipoActivo==='gasolina'){
-    const monto=parseFloat(document.getElementById('g-monto')?.value)||0;
-    const litros=parseFloat(document.getElementById('g-litros')?.value)||0;
-    const combustible=document.getElementById('g-combustible')?.value||'regular';
+    const monto = parseFloat(document.getElementById('g-monto')?.value)||0;
     if(monto<=0){ showToast('Ingresa el monto'); return; }
-    const precioLitro=litros>0?monto/litros:0;
-    const iepsLitro={regular:6.01,premium:6.22,diesel:5.97}[combustible]||6.01;
-    const iepsTotal=litros>0?litros*iepsLitro:0;
-    gasto={tipo:'gasolina',combustible,monto,litros,precioLitro,iepsTotal,iva:Math.max(0,(monto-iepsTotal)*0.16),fecha,validado:false,creadoPor:STATE.user?.email};
+    const litros = parseFloat(document.getElementById('g-litros')?.value)||0;
+    const combustible = document.getElementById('g-combustible')?.value||'regular';
+    const iepsLitro = {regular:6.01,premium:6.22,diesel:5.97}[combustible]||6.01;
+    const iepsTotal = litros>0 ? litros*iepsLitro : 0;
+    gasto = {tipo:'gasolina',combustible,monto,litros,precioLitro:litros>0?monto/litros:0,iepsTotal,iva:Math.max(0,(monto-iepsTotal)*0.16),fecha,validado:false,creadoPor:STATE.user?.email};
   } else if(tipoActivo==='franelero'){
-    const monto=parseFloat(document.getElementById('g-monto-franelero')?.value)||0;
+    const monto = parseFloat(document.getElementById('g-monto-franelero')?.value)||0;
     if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'franelero',descripcion:document.getElementById('g-franelero-desc')?.value.trim()||'Franelero',monto,fecha,validado:false,creadoPor:STATE.user?.email};
+    gasto = {tipo:'franelero',descripcion:document.getElementById('g-franelero-desc')?.value.trim()||'Franelero',monto,fecha,validado:false,creadoPor:STATE.user?.email};
   } else if(tipoActivo==='mantenimiento'){
-    const monto=parseFloat(document.getElementById('g-monto-mant')?.value)||0;
-    const desc=document.getElementById('g-mant-desc')?.value.trim();
+    const monto = parseFloat(document.getElementById('g-monto-mant')?.value)||0;
     if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'mantenimiento',descripcion:desc||'Mantenimiento',monto,fecha,validado:false,creadoPor:STATE.user?.email};
+    gasto = {tipo:'mantenimiento',descripcion:document.getElementById('g-mant-desc')?.value.trim()||'Mantenimiento',monto,fecha,validado:false,creadoPor:STATE.user?.email};
   } else if(tipoActivo==='parquimetro'){
-    const monto=parseFloat(document.getElementById('g-monto-parq')?.value)||0;
-    const fotoEl=document.getElementById('g-foto');
-    if(!fotoEl?.files?.length){ showToast('La foto es obligatoria para parquímetros'); return; }
+    const monto = parseFloat(document.getElementById('g-monto-parq')?.value)||0;
     if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'parquimetro',descripcion:document.getElementById('g-parq-desc')?.value.trim()||'Parquímetro',monto,fecha,validado:false,creadoPor:STATE.user?.email,foto:_fotoGastoBase64||null};
+    const fotoEl = document.getElementById('g-foto');
+    if(!fotoEl?.files?.length && !_fotoGastoBase64){ showToast('La foto es obligatoria para parquímetros'); return; }
+    gasto = {tipo:'parquimetro',descripcion:document.getElementById('g-parq-desc')?.value.trim()||'Parquímetro',monto,fecha,validado:false,creadoPor:STATE.user?.email};
   } else {
-    const monto=parseFloat(document.getElementById('g-monto2')?.value)||0;
-    const desc=document.getElementById('g-desc')?.value.trim();
+    const monto = parseFloat(document.getElementById('g-monto2')?.value)||0;
     if(monto<=0){ showToast('Ingresa el monto'); return; }
-    gasto={tipo:'otro',descripcion:desc,monto,fecha,validado:false,creadoPor:STATE.user?.email};
+    gasto = {tipo:'otro',descripcion:document.getElementById('g-desc')?.value.trim()||'Otro',monto,fecha,validado:false,creadoPor:STATE.user?.email};
   }
-  // Attach foto if available and not already set
-  if(_fotoGastoBase64 && !gasto.foto) gasto.foto = _fotoGastoBase64;
-  if(!_db || !_fbFs){
-    showToast('Sin conexión — gasto guardado localmente');
+
+  if(!gasto){ showToast('No se pudo construir el gasto'); return; }
+  if(_fotoGastoBase64) gasto.foto = _fotoGastoBase64;
+
+  // Save to Firebase or queue locally
+  if(_db && _fbFs){
+    try{
+      const {collection, addDoc} = _fbFs;
+      const ref = await addDoc(collection(_db,'gastos'), gasto);
+      STATE.gastos.unshift({...gasto, id:ref.id});
+      showToast('Gasto enviado para validar ✓');
+    }catch(e){
+      console.error('guardarGasto FB error:', e);
+      showToast('Sin conexión — guardado localmente');
+      addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto});
+      STATE.gastos.unshift(gasto);
+    }
+  } else {
+    showToast('Sin conexión — guardado localmente');
     addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto});
     STATE.gastos.unshift(gasto);
-    cacheData(); closeSheet(); renderGastos();
-    return;
   }
-  try{
-    const { collection, addDoc } = _fbFs;
-    const ref=await addDoc(collection(_db,'gastos'),gasto);
-    STATE.gastos.unshift({...gasto,id:ref.id});
-    cacheData(); closeSheet(); renderGastos(); showToast('Gasto enviado para validar ✓');
-  }catch(e){
-    console.error('guardarGasto error:',e);
-    showToast('Error al guardar: '+e.message.slice(0,40));
-    addToQueue({type:'add',col:'gastos',id:'gas_'+Date.now(),data:gasto});
-    STATE.gastos.unshift(gasto);
-    cacheData(); closeSheet(); renderGastos();
-  }
-  }catch(outerErr){
-    console.error('guardarGasto crash:', outerErr);
-    showToast('Error: '+outerErr.message.slice(0,60));
-  }
+  cacheData();
+  closeSheet();
+  renderGastos();
 }
 
 // ─── Sheet overlay ──────────────────────────────────────────
