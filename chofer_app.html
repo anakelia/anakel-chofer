@@ -332,7 +332,7 @@
 </div>
 
 <!-- MAIN APP -->
-<div id="app" style="display:none">
+<div id="app" style="display:none;opacity:0;transition:opacity 0.15s">
   <!-- Last sync bar -->
   <div id="sync-bar" style="background:var(--bg2);padding:3px 16px;font-size:10px;color:var(--text3);text-align:right;border-bottom:1px solid var(--border)">Sin sincronizar</div>
   <!-- Offline banner -->
@@ -709,6 +709,7 @@ async function initFirebase(){
         }
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
+        setTimeout(()=>document.getElementById('app').style.opacity='1',10);
         document.getElementById('topbar-title').textContent = sess.nombre || sess.username;
         document.getElementById('topbar-sub').textContent = sess.rol || 'chofer';
         loadAllData().then(()=>{ try{renderVentas();}catch(e){} }).catch(()=>{});
@@ -724,6 +725,7 @@ async function initFirebase(){
       localStorage.setItem('anakel_cached_user', user.email);
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
+      setTimeout(()=>document.getElementById('app').style.opacity='1',10);
       document.getElementById('topbar-sub').textContent = user.email;
       // Show active route info
       mostrarRutaActivaTopbar();
@@ -3365,10 +3367,9 @@ function renderProductos(){
   // Show inventory status banner
   const tieneInventario=STATE.inventarioCarro&&STATE.inventarioCarro.length>0;
   let html='<div style="background:var(--surface)">';
-  if(!tieneInventario){
-    html+=`<div style="padding:10px 16px;background:var(--amber-bg);font-size:12px;color:var(--amber);border-bottom:1px solid var(--border)">
-      📦 Sin inventario disponible — no hay una ruta activa asignada a tu usuario. El supervisor debe iniciar tu ruta desde el ERP.
-    </div>`;
+  if(!tieneInventario && tieneSinRuta()){
+    list.innerHTML = bannerSinRuta('productos');
+    return;
   }
   let lastCat=null;
   prods.forEach(p=>{
