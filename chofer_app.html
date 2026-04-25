@@ -700,6 +700,8 @@ async function initFirebase(){
           uid: sess.uid,
           rol: sess.rol,
           permisos: sess.permisos || {},
+          choferId: sess.choferId||null,
+          scope: sess.scope||'propios',
           loginType: 'username'
         };
         STATE._permisos = sess.permisos || {};
@@ -872,6 +874,8 @@ async function doLogin(){
         nombre: usuario.nombre,
         rol: usuario.rol || 'chofer',
         permisos: usuario.permisos || {},
+        choferId: usuario.choferId||null,
+        scope: usuario.scope||'propios',
         ts: Date.now()
       };
       localStorage.setItem('anakel_session', JSON.stringify(session));
@@ -882,6 +886,8 @@ async function doLogin(){
         uid: usuario.id,
         rol: usuario.rol||'chofer',
         permisos: usuario.permisos||{},
+        choferId: usuario.choferId||null,
+        scope: usuario.scope||'propios',
         loginType: 'username'
       };
       STATE._permisos = usuario.permisos||{};
@@ -1591,18 +1597,18 @@ function renderVentas(){
   const ventasQ=(document.getElementById('ventas-search')?.value||'').toLowerCase().trim();
   let ventas=STATE.ventas.filter(v=>v.tipo==='venta'&&inPeriod(v.fecha,_ventasPeriod));
   ventas.sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0));
-  // Scope: non-admins see their own ventas + directas from ERP for their clients
-  if(!esAdminOSupervisor()){
-    const me=STATE.user?.email||''; const mu=STATE.user?.username||'';
-    const misClientesIds=new Set(STATE.clientes.map(cl=>String(cl.id)));
+  // Scope: non-admins with scope 'propios' only see their own ventas
+  if(!esAdminOSupervisor() && (STATE.user?.scope||'propios')==='propios'){
+    const me=STATE.user?.email||'';
+    const mu=STATE.user?.username||'';
+    const nombre=STATE.user?.nombre||'';
+    const hayRutaActiva=!!STATE._rutaActivaNombre;
+    const enRuta=new Set(getClientesEnRuta());
     ventas=ventas.filter(v=>{
-      // Show ERP direct ventas if client is in this chofer's portfolio
-      if(v.fuente==='directa'&&v.clienteId&&misClientesIds.has(String(v.clienteId))) return true;
-      // Own ventas
-      if(v.chofer&&(v.chofer===me||v.chofer===mu)) return true;
-      if(v.creadoPor&&(v.creadoPor===me||v.creadoPor===mu)) return true;
-      // Route clients
-      if(v.clienteId&&clienteEstaEnMiRuta(v.clienteId)) return true;
+      if(v.chofer&&(v.chofer===me||v.chofer===mu||v.chofer===nombre)) return true;
+      if(v.creadoPor&&(v.creadoPor===me||v.creadoPor===mu||v.creadoPor===nombre)) return true;
+      if(v.fuente==='directa'&&!hayRutaActiva) return true;
+      if(hayRutaActiva&&v.clienteId&&enRuta.has(String(v.clienteId))) return true;
       return false;
     });
   }
