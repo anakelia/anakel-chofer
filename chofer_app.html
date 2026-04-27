@@ -317,6 +317,19 @@
 .metric-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
 .section-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
 </style>
+  <!-- Firebase SDK — preloaded as module to avoid dynamic import failures on Android -->
+  <script type="module">
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, initializeFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, getDocsFromServer, deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    // Expose to window so non-module scripts can use them
+    window._fbModules = { initializeApp, getApps, getFirestore, initializeFirestore,
+      collection, doc, addDoc, setDoc, getDoc, getDocs, getDocsFromServer,
+      deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch,
+      getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+    window._fbModulesReady = true;
+    if(window._fbModulesReadyCb) window._fbModulesReadyCb();
+  </script>
 </head>
 <body>
 
@@ -648,9 +661,14 @@ function ticketHeader58(extra){
 let _db, _auth, _fbFs;
 
 async function initFirebase(){
-  const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
-  const { getFirestore, initializeFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, getDocsFromServer, deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-  const { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+  // Wait for Firebase modules (preloaded as <script type="module"> in head)
+  if(!window._fbModulesReady){
+    await new Promise(resolve=>{window._fbModulesReadyCb=resolve;});
+  }
+  const { initializeApp, getApps, getFirestore, initializeFirestore,
+    collection, doc, addDoc, setDoc, getDoc, getDocs, getDocsFromServer,
+    deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp, writeBatch,
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } = window._fbModules;
 
   const firebaseConfig = {
     apiKey: "AIzaSyCJehNdftf1Ndkj_P7s825BTWcAwK7O0SE",
@@ -803,7 +821,7 @@ async function processQueue(){
       const { collection, doc, setDoc, addDoc } = _fbFs;
       if(op.type==='set') await setDoc(doc(_db, op.col, op.id), op.data, {merge:true});
       else if(op.type==='add') await addDoc(collection(_db, op.col), op.data);
-      else if(op.type==='delete'){ const {deleteDoc}=await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'); await deleteDoc(doc(_db, op.col, op.id)); }
+      else if(op.type==='delete'){ const delFn=_fbFs?.deleteDoc||(window._fbModules?.deleteDoc); if(delFn) await delFn(doc(_db, op.col, op.id)); }
     }catch(e){ remaining.push(op); }
   }
   saveQueue(remaining);
@@ -924,7 +942,7 @@ async function doLogin(){
   while(!_auth && attempts < 20){ await new Promise(r=>setTimeout(r,300)); }
   if(!_auth){ err.textContent='Servicio no disponible'; btn.textContent='Entrar'; btn.disabled=false; return; }
   try{
-    const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    const { signInWithEmailAndPassword } = window._fbModules||{};
     await signInWithEmailAndPassword(_auth, input, pass);
     btn.textContent = 'Entrar'; btn.disabled = false;
   }catch(e){
@@ -946,7 +964,7 @@ function doLogout(){
     document.getElementById('login-pass').value = '';
     return;
   }
-  import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js').then(({signOut})=>signOut(_auth));
+  if(window._fbModules?.signOut && _auth) window._fbModules.signOut(_auth);
 }
 
 async function doSync(){
@@ -956,7 +974,7 @@ async function doSync(){
     // Clear Firestore local cache before loading to ensure fresh data on Android
     if(_db && _fbFs){
       try{
-        const { clearIndexedDbPersistence, terminate } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        // Firebase already loaded via window._fbModules
         // Simpler approach: just clear cache_gastos so it reloads fresh
         localStorage.removeItem('cache_gastos');
       }catch(e){}
@@ -964,7 +982,7 @@ async function doSync(){
     await loadAllData();
     // Re-render gastos if visible
     if(document.getElementById('gastos-list')) renderGastos();
-    _lastSyncTime=new Date(); updateSyncBar();
+    _lastSyncTime=new Date(); updateSyncBar(); setupBackButton();
     showToast('✓ Sincronización exitosa');
   }catch(e){
     showToast('✗ Error al sincronizar — sin internet');
@@ -1589,6 +1607,21 @@ function changeMonth(dir){
 }
 
 function setVentasFilter(f,btn){ _ventasFilter=f; document.querySelectorAll('#page-ventas .filter-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderVentas(); }
+
+// ── Android back button ───────────────────────────────────────────────────
+function setupBackButton(){
+  history.pushState({page:'main'}, '');
+  window.addEventListener('popstate', ()=>{
+    const overlay = document.getElementById('overlay');
+    // If sheet is open, close it
+    if(overlay && overlay.classList.contains('show')){ closeSheet(); history.pushState({page:'main'},''); return; }
+    // If drawer is open, close it
+    const drawer = document.getElementById('side-drawer');
+    if(drawer && drawer.classList.contains('open')){ closeSideDrawer(); history.pushState({page:'main'},''); return; }
+    // Otherwise exit is natural (Android exits the app/browser)
+  });
+}
+
 function renderVentas(){
   const label=document.getElementById('month-label');
   if(label) label.textContent=periodLabel(_ventasPeriod);
